@@ -1,1 +1,1 @@
-# Zaro-Sportz
+# Zaro Sportz
