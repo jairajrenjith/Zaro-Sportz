@@ -79,13 +79,12 @@ function buildConfirmMessage(b, dateLabel, slotLines, totalPaid, balanceDue, sta
   if (status === 'paid_more') {
     return (
       `Hi ${b.name},\n\n` +
-      `Your booking at Zaro Sportz is confirmed.\n\n` +
+      `Your booking at Zaro Sportz is CONFIRMED.\n\n` +
       `Date: ${dateLabel}\n` +
       `Slots: ${slotsText}\n` +
       `Sport: ${b.sport}\n` +
-      `Paid: Rs.${totalPaid}\n` +
-      `Extra Rs.${Math.abs(balanceDue)} will be adjusted in your next booking.\n\n` +
-      `- Zaro Sportz`
+      `Amount Paid: Rs.${totalPaid} (Rs.${Math.abs(balanceDue)} extra)\n\n` +
+      `See you on the field!\n- Zaro Sportz`
     );
   }
   return (
