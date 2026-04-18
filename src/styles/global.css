@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --black: #080808;
+  --dark: #0f0f0f;
+  --card-bg: #111111;
+  --card-border: #1a1a1a;
+  --green: #c8f135;
+  --green-dim: #c8f13540;
+  --green-glow: #c8f13520;
+  --green-dark: #7a9a1e;
+  --text: #e8e8e0;
+  --text-dim: #8a8a7a;
+  --muted: #555550;
+  --border: #1e1e1a;
+  --border-bright: #2e2e28;
+  --red: #ff3b3b;
+  --yellow: #f0c420;
+  --font-display: 'Bebas Neue', 'Impact', sans-serif;
+  --font-ui: 'DM Mono', monospace;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--black);
+  color: var(--text);
+  font-family: var(--font-ui);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--black); }
+::-webkit-scrollbar-thumb { background: var(--green); border-radius: 2px; }
+
+section { padding: 64px 16px; position: relative; z-index: 1; }
+nav, footer { position: relative; z-index: 1; }
+
+@media (min-width: 640px) {
+  section { padding: 100px 24px; }
+}
+
+/* Section title system */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--green);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.section-label::before,
+.section-label::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--green);
+  opacity: 0.5;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 8vw, 5rem);
+  color: var(--text);
+  text-align: center;
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  margin-bottom: 8px;
+}
+.section-title span { color: var(--green); }
+
+.section-sub {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  margin-bottom: 36px;
+  letter-spacing: 0.03em;
+  padding: 0 8px;
+}
+
+@media (min-width: 640px) {
+  .section-sub { margin-bottom: 56px; font-size: 0.85rem; }
+}
+
+/* Divider */
+.section-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  position: absolute;
+  top: 0; left: 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: #080808;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 12px 32px;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  text-decoration: none;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.btn:hover {
+  background: #d8ff50;
+  transform: translateY(-1px);
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--green);
+  color: var(--green);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.btn-outline:hover {
+  background: var(--green-glow);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-bright);
+  color: var(--text-dim);
+  clip-path: none;
+  border-radius: 2px;
+}
+.btn-ghost:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger */
+.stagger > *:nth-child(1) { transition-delay: 0s; }
+.stagger > *:nth-child(2) { transition-delay: 0.08s; }
+.stagger > *:nth-child(3) { transition-delay: 0.16s; }
+.stagger > *:nth-child(4) { transition-delay: 0.24s; }
+.stagger > *:nth-child(5) { transition-delay: 0.32s; }
+.stagger > *:nth-child(6) { transition-delay: 0.40s; }
+
+/* Input base */
+input, textarea {
+  background: var(--dark);
+  border: 1px solid var(--border-bright);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 12px 16px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus {
+  border-color: var(--green);
+}
+input::placeholder { color: var(--muted); }
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.018;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Gallery */
+.gallery-item {
+  transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s;
+}
+.gallery-item:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 40px var(--green-dim);
+}
+
+/* Admin shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.35s ease; }
+
+/* Slot pop */
+@keyframes slotPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.slot-pop { animation: slotPop 0.2s ease; }
+
+/* Bounce scroll */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(7px); }
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scanline accent */
+.scanline-accent {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--green) 40%, var(--green) 60%, transparent 100%);
+  opacity: 0.15;
+}
