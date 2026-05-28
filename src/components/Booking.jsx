@@ -29,14 +29,14 @@ function generateSlots() {
 
 const ALL_SLOTS = generateSlots();
 
-// Returns true if this slot has already passed for today
 function isPastSlot(slotId, dateStr) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  if (dateStr !== todayStr) return false; // future dates: never past
-  return slotId < today.getHours(); // block only slots strictly before current hour
+  if (dateStr !== todayStr) return false;
+  return slotId < today.getHours();
 }
-const SPORTS = ['Football (6-a-side)', 'Cricket'];
+
+const SPORTS = ["6's Football", 'Cricket'];
 
 import upiQr from '../assets/upi_qr.png';
 
@@ -51,6 +51,7 @@ function UpiQR() {
         background: '#fff',
         padding: 4,
         display: 'block',
+        borderRadius: 8,
       }}
     />
   );
@@ -70,7 +71,7 @@ export default function Booking() {
   const [step, setStep] = useState('form'); // 'form' | 'payment' | 'done'
   const [paySubmitting, setPaySubmitting] = useState(false);
 
-  const ref = useRef();
+  const sectionRef = useRef();
 
   useEffect(() => {
     setLoading(true);
@@ -83,13 +84,12 @@ export default function Booking() {
   }, [selectedDate]);
 
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) e.target.classList.add('visible'); },
-      { threshold: 0.08 }
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
+    if (step === 'payment' || step === 'done') {
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
+  }, [step]);
 
   useEffect(() => {
     if (!dropOpen) return;
@@ -138,7 +138,6 @@ export default function Booking() {
       amountPaid: advance,
     });
 
-    // Clean WhatsApp message — no emojis or special chars that cause unknown chars
     const statusLine = selected.length > 1
       ? `Slots: ${slotLabels} (${selected.length} slots)`
       : `Slot: ${slotLabels}`;
@@ -165,19 +164,20 @@ export default function Booking() {
     setSelected([]);
     setName('');
     setPhone('');
+    setSport(SPORTS[0]);
     setStep('form');
   };
 
   return (
-    <section id="booking" style={{
-      background: '#080808',
+    <section id="booking" ref={sectionRef} style={{
+      background: 'var(--bg)',
       borderTop: '1px solid var(--border)',
     }}>
       <div className="section-label">RESERVE YOUR TIME</div>
       <h2 className="section-title">Book a <span>Slot</span></h2>
       <p className="section-sub">Select date and time — pay advance via UPI to confirm</p>
 
-      <div ref={ref} className="reveal" style={{
+      <div className="reveal visible" style={{
         maxWidth: 740, margin: '0 auto',
       }}>
 
@@ -188,17 +188,20 @@ export default function Booking() {
             border: '1px solid var(--green)',
             padding: 'clamp(24px, 6vw, 40px) clamp(16px, 5vw, 32px)',
             textAlign: 'center',
+            borderRadius: 12,
           }}>
+            {/* Green circle with BLACK tick */}
             <div style={{
-              width: 48, height: 48,
+              width: 64, height: 64,
               background: 'var(--green)',
               borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 20px',
+              boxShadow: '0 0 24px rgba(200,241,53,0.4)',
             }}>
-              <IconCheck size={22} color="#080808" />
+              <IconCheck size={30} color="#000000" />
             </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 5vw, 2rem)', color: 'var(--text)', letterSpacing: '0.06em', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(1.5rem, 5vw, 2rem)', color: 'var(--text)', letterSpacing: '0.06em', marginBottom: 8 }}>
               BOOKING SUBMITTED
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: '0.8rem', lineHeight: 1.8, marginBottom: 28 }}>
@@ -210,11 +213,12 @@ export default function Booking() {
               border: '1px solid var(--green)',
               color: 'var(--green)',
               padding: '10px 28px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.8rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
               letterSpacing: '0.1em',
               cursor: 'pointer',
-              borderRadius: 0,
+              borderRadius: 8,
             }}>BOOK ANOTHER SLOT</button>
           </div>
         )}
@@ -225,17 +229,19 @@ export default function Booking() {
             background: 'var(--card-bg)',
             border: '1px solid var(--border)',
             padding: 'clamp(20px, 5vw, 36px)',
+            borderRadius: 12,
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.62rem', letterSpacing: '0.16em', marginBottom: 24 }}>
-              STEP 2 OF 2 - ADVANCE PAYMENT
+              STEP 2 OF 2 — ADVANCE PAYMENT
             </div>
 
             {/* Summary */}
             <div style={{
-              background: '#0a0e07',
+              background: 'var(--bg2)',
               border: '1px solid var(--border)',
               padding: '16px 18px',
               marginBottom: 24,
+              borderRadius: 8,
             }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-dim)', lineHeight: 2 }}>
                 <div><span style={{ color: 'var(--muted)' }}>NAME:</span> {name}</div>
@@ -244,17 +250,18 @@ export default function Booking() {
                 <div><span style={{ color: 'var(--muted)' }}>SLOTS:</span> {slotLabels}</div>
               </div>
               <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <div style={{ background: '#0a0a0a', border: '1px solid var(--border)', padding: '10px 12px' }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: 6 }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.12em', marginBottom: 4 }}>TOTAL</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{total.toLocaleString()}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{total.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#0a110a', border: '1px solid var(--green)', padding: '10px 12px' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--green)', letterSpacing: '0.12em', marginBottom: 4 }}>PAY NOW</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--green)', letterSpacing: '0.04em' }}>RS.{advance.toLocaleString()}</div>
+                {/* Green "PAY NOW" card — text in black for readability */}
+                <div style={{ background: 'var(--green)', border: '1px solid var(--green)', padding: '10px 12px', borderRadius: 6 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#000000', letterSpacing: '0.12em', marginBottom: 4, fontWeight: 700 }}>PAY NOW</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#000000', letterSpacing: '0.04em' }}>RS.{advance.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#0a0a0a', border: '1px solid var(--border)', padding: '10px 12px' }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: 6 }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.12em', marginBottom: 4 }}>AT VENUE</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{balance.toLocaleString()}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{balance.toLocaleString()}</div>
                 </div>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--muted)', marginTop: 10, letterSpacing: '0.04em' }}>
@@ -271,7 +278,8 @@ export default function Booking() {
               marginBottom: 24,
               padding: '20px 16px',
               border: '1px solid var(--border)',
-              background: '#0a0a0a',
+              background: 'var(--bg)',
+              borderRadius: 8,
             }}>
               <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', letterSpacing: '0.16em' }}>
                 SCAN TO PAY RS.{advance} ADVANCE
@@ -298,23 +306,24 @@ export default function Booking() {
               disabled={paySubmitting}
               style={{
                 width: '100%',
-                background: paySubmitting ? '#1a1a1a' : 'var(--green)',
-                color: paySubmitting ? 'var(--muted)' : '#080808',
+                background: paySubmitting ? 'var(--card-bg)' : 'var(--green)',
+                color: paySubmitting ? 'var(--muted)' : '#000000',
                 border: 'none',
                 padding: '15px',
                 fontFamily: 'var(--font-display)',
+                fontWeight: 700,
                 fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
                 letterSpacing: '0.1em',
                 cursor: paySubmitting ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                borderRadius: 0,
+                borderRadius: 8,
               }}
               onMouseEnter={e => { if (!paySubmitting) e.currentTarget.style.background = '#d8ff50'; }}
               onMouseLeave={e => { if (!paySubmitting) e.currentTarget.style.background = 'var(--green)'; }}
             >
-              <IconWhatsApp size={18} color={paySubmitting ? 'var(--muted)' : '#080808'} />
-              {paySubmitting ? 'SAVING...' : 'I HAVE PAID - NOTIFY ADMIN'}
+              <IconWhatsApp size={18} color={paySubmitting ? 'var(--muted)' : '#000000'} />
+              {paySubmitting ? 'SAVING...' : 'I HAVE PAID — NOTIFY ADMIN'}
             </button>
 
             <p style={{
@@ -334,7 +343,9 @@ export default function Booking() {
             <div className="pricing-strip" style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr',
               border: '1px solid var(--border)',
-              marginBottom: 2,
+              marginBottom: 8,
+              borderRadius: 10,
+              overflow: 'hidden',
             }}>
               {[
                 { time: '06:00 - 19:00', label: 'STANDARD RATE', price: 'RS. 1,000 / HR', color: 'var(--green)' },
@@ -348,7 +359,7 @@ export default function Booking() {
                 }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--muted)', letterSpacing: '0.12em' }}>{p.label}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-dim)' }}>{p.time}</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1rem, 3vw, 1.2rem)', color: p.color, letterSpacing: '0.04em', marginTop: 2 }}>{p.price}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(1rem, 3vw, 1.2rem)', color: p.color, letterSpacing: '0.04em', marginTop: 2 }}>{p.price}</div>
                 </div>
               ))}
             </div>
@@ -358,36 +369,14 @@ export default function Booking() {
               background: 'var(--card-bg)',
               border: '1px solid var(--border)',
               padding: 'clamp(16px, 5vw, 36px)',
+              borderRadius: 12,
             }}>
               <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.62rem', letterSpacing: '0.16em', marginBottom: 24 }}>
-                STEP 1 OF 2 - DETAILS &amp; SLOTS
-              </div>
-
-              {/* Sport selector */}
-              <div style={{ marginBottom: 28 }}>
-                <label style={labelStyle}>SPORT</label>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {SPORTS.map(s => (
-                    <button key={s} onClick={() => setSport(s)} style={{
-                      flex: 1,
-                      padding: '10px 8px',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'clamp(0.65rem, 2vw, 0.78rem)',
-                      letterSpacing: '0.04em',
-                      transition: 'all 0.18s',
-                      background: sport === s ? 'var(--green)' : 'var(--dark)',
-                      color: sport === s ? '#080808' : 'var(--text-dim)',
-                      border: '1px solid',
-                      borderColor: sport === s ? 'var(--green)' : 'var(--border)',
-                      borderRadius: 0,
-                    }}>{s.toUpperCase()}</button>
-                  ))}
-                </div>
+                STEP 1 OF 2 — DETAILS &amp; SLOTS
               </div>
 
               {/* Date dropdown */}
-              <div style={{ marginBottom: 28, position: 'relative' }} className="date-dropdown">
+              <div style={{ marginBottom: 24, position: 'relative' }} className="date-dropdown">
                 <label style={labelStyle}>
                   <IconCalendar size={13} color="var(--green)" />
                   DATE
@@ -403,7 +392,7 @@ export default function Booking() {
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  borderRadius: 0,
+                  borderRadius: 8,
                   transition: 'border-color 0.2s',
                 }}>
                   {selectedLabel}
@@ -414,19 +403,20 @@ export default function Booking() {
 
                 {dropOpen && (
                   <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30,
-                    background: '#0e0e0e',
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+                    background: 'var(--card-bg)',
                     border: '1px solid var(--border)',
                     borderTop: 'none',
                     maxHeight: 240, overflowY: 'auto',
-                    boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.9)',
+                    borderRadius: '0 0 8px 8px',
                   }}>
                     {dates.map(d => (
                       <button key={d.value} onClick={() => { setSelectedDate(d.value); setDropOpen(false); }}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           width: '100%',
-                          background: d.value === selectedDate ? '#141a0e' : 'transparent',
+                          background: d.value === selectedDate ? 'var(--green-dim)' : 'var(--card-bg)',
                           border: 'none',
                           borderBottom: '1px solid var(--border)',
                           color: d.value === selectedDate ? 'var(--green)' : 'var(--text-dim)',
@@ -434,8 +424,8 @@ export default function Booking() {
                           fontFamily: 'var(--font-mono)', fontSize: '0.8rem',
                           transition: 'background 0.15s',
                         }}
-                        onMouseEnter={e => { if (d.value !== selectedDate) e.currentTarget.style.background = '#111'; }}
-                        onMouseLeave={e => { if (d.value !== selectedDate) e.currentTarget.style.background = 'transparent'; }}
+                        onMouseEnter={e => { if (d.value !== selectedDate) e.currentTarget.style.background = 'var(--bg)'; }}
+                        onMouseLeave={e => { if (d.value !== selectedDate) e.currentTarget.style.background = 'var(--card-bg)'; }}
                       >{d.label}</button>
                     ))}
                   </div>
@@ -443,12 +433,12 @@ export default function Booking() {
               </div>
 
               {/* Slot grid */}
-              <div style={{ marginBottom: 28 }}>
+              <div style={{ marginBottom: 24 }}>
                 <label style={{ ...labelStyle, marginBottom: 12 }}>
                   <IconClock size={13} color="var(--green)" />
                   TIME SLOTS
                   <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.65rem', marginLeft: 6 }}>
-                    - multi-select allowed
+                    — multi-select allowed
                   </span>
                   {loading && (
                     <span style={{ color: 'var(--muted)', fontSize: '0.62rem', marginLeft: 8 }}>
@@ -465,41 +455,48 @@ export default function Booking() {
                       <button key={slot.id} onClick={() => toggleSlot(slot.id)}
                         disabled={isBooked || isPast || loading}
                         style={{
-                          background: isBooked || isPast
-                            ? '#0a0a0a'
-                            : isActive
-                              ? 'var(--green)'
-                              : 'var(--dark)',
-                          color: isBooked || isPast
-                            ? '#2a2a2a'
-                            : isActive
-                              ? '#080808'
-                              : slot.peak ? 'var(--yellow)' : 'var(--text-dim)',
+                          background: isBooked
+                            ? 'var(--bg)'
+                            : isPast
+                              ? 'var(--bg)'
+                              : isActive
+                                ? 'var(--green)'
+                                : 'var(--dark)',
+                          // When active (green bg), use black text for readability
+                          color: isBooked
+                            ? '#c02020'
+                            : isPast
+                              ? '#2a2a2a'
+                              : isActive
+                                ? '#000000'
+                                : slot.peak ? 'var(--yellow)' : 'var(--text-dim)',
                           border: '1px solid',
-                          borderColor: isBooked || isPast
-                            ? 'var(--border)'
-                            : isActive
-                              ? 'var(--green)'
-                              : slot.peak ? '#f0c42022' : 'var(--border)',
+                          borderColor: isBooked
+                            ? '#5a1515'
+                            : isPast
+                              ? 'var(--border)'
+                              : isActive
+                                ? 'var(--green)'
+                                : slot.peak ? '#f0c42022' : 'var(--border)',
                           padding: '9px 4px',
                           cursor: isBooked || isPast || loading ? 'not-allowed' : 'pointer',
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.68rem',
                           transition: 'all 0.12s',
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                          opacity: isBooked || isPast ? 0.3 : 1,
+                          opacity: isPast ? 0.3 : 1,
                           position: 'relative',
-                          borderRadius: 0,
+                          borderRadius: 8,
                           letterSpacing: '0.01em',
                         }}
                       >
                         {isActive && (
                           <span style={{ position: 'absolute', top: 4, right: 4 }}>
-                            <IconCheck size={10} color="#080808" />
+                            <IconCheck size={10} color="#000000" />
                           </span>
                         )}
                         <span>{slot.label}</span>
-                        <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>
+                        <span style={{ fontSize: '0.6rem', opacity: isBooked ? 1 : 0.7, fontWeight: isBooked ? 600 : 400 }}>
                           {isBooked ? 'BOOKED' : isPast ? 'PAST' : `RS.${slot.price}`}
                         </span>
                       </button>
@@ -508,32 +505,33 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Summary bar */}
+              {/* Summary bar — green bg, all text black */}
               {selected.length > 0 && (
                 <div style={{
-                  background: '#141a0e',
+                  background: 'var(--green)',
                   border: '1px solid var(--green)',
                   padding: '14px 18px',
                   marginBottom: 24,
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   flexWrap: 'wrap', gap: 8,
+                  borderRadius: 8,
                 }}>
                   <div>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: '0.78rem' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: '#000000', fontSize: '0.78rem', fontWeight: 700 }}>
                       {selected.length} SLOT{selected.length > 1 ? 'S' : ''} — TOTAL RS.{total.toLocaleString()}
                     </span>
-                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.65rem', marginTop: 3 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', color: '#1a1a00', fontSize: '0.65rem', marginTop: 3 }}>
                       Advance to pay: RS.{advance} &nbsp;|&nbsp; Balance at venue: RS.{balance}
                     </div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-display)', color: 'var(--green)', fontSize: '1.5rem', letterSpacing: '0.04em' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#000000', fontSize: '1.5rem', letterSpacing: '0.04em' }}>
                     RS. {advance}
                   </span>
                 </div>
               )}
 
-              {/* Name & Phone */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, marginBottom: 20 }}
+              {/* Name, Phone & Sport type */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}
                 className="booking-fields">
                 <div>
                   <label style={labelStyle}>YOUR NAME</label>
@@ -541,7 +539,6 @@ export default function Booking() {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Enter your name"
-                    style={{ borderRadius: 0 }}
                   />
                 </div>
                 <div>
@@ -550,8 +547,32 @@ export default function Booking() {
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     placeholder="9XXXXXXXXX"
-                    style={{ borderRadius: 0 }}
                   />
+                </div>
+              </div>
+
+              {/* Sport type selector */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={labelStyle}>SPORT TYPE</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {SPORTS.map(s => (
+                    <button key={s} onClick={() => setSport(s)} style={{
+                      flex: 1,
+                      padding: '11px 8px',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 700,
+                      fontSize: 'clamp(0.75rem, 2.5vw, 0.95rem)',
+                      letterSpacing: '0.04em',
+                      transition: 'all 0.18s',
+                      // Active: green bg with black text; inactive: dark bg with dimmed text
+                      background: sport === s ? 'var(--green)' : 'var(--dark)',
+                      color: sport === s ? '#000000' : 'var(--text-dim)',
+                      border: '1px solid',
+                      borderColor: sport === s ? 'var(--green)' : 'var(--border)',
+                      borderRadius: 8,
+                    }}>{s.toUpperCase()}</button>
+                  ))}
                 </div>
               </div>
 
@@ -559,17 +580,18 @@ export default function Booking() {
                 disabled={!name || !phone || selected.length === 0}
                 style={{
                   width: '100%',
-                  background: !name || !phone || selected.length === 0 ? '#1a1a1a' : 'var(--green)',
-                  color: !name || !phone || selected.length === 0 ? 'var(--muted)' : '#080808',
+                  background: !name || !phone || selected.length === 0 ? 'var(--card-bg)' : 'var(--green)',
+                  color: !name || !phone || selected.length === 0 ? 'var(--muted)' : '#000000',
                   border: 'none',
                   padding: '15px',
                   fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
                   fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
                   letterSpacing: '0.1em',
                   cursor: !name || !phone || selected.length === 0 ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  borderRadius: 0,
+                  borderRadius: 8,
                 }}
                 onMouseEnter={e => {
                   if (name && phone && selected.length > 0) e.currentTarget.style.background = '#d8ff50';
@@ -597,7 +619,7 @@ export default function Booking() {
         .slot-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-          gap: 2px;
+          gap: 6px;
         }
         @media (max-width: 480px) {
           .booking-fields { grid-template-columns: 1fr !important; }

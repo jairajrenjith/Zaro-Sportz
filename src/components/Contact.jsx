@@ -40,7 +40,7 @@ export default function Contact() {
 
   return (
     <section id="contact" style={{
-      background: 'var(--dark)',
+      background: 'var(--bg2)',
       borderTop: '1px solid var(--border)',
     }}>
       <div className="section-label">GET IN TOUCH</div>
@@ -67,7 +67,7 @@ export default function Contact() {
               overflow: 'hidden',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#141414';
+              e.currentTarget.style.background = 'var(--card-bg)';
               e.currentTarget.querySelector('.contact-accent').style.opacity = '1';
             }}
             onMouseLeave={e => {

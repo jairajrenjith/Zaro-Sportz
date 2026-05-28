@@ -22,24 +22,26 @@ export default function Navbar() {
     document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const navBg = scrolled ? 'rgba(8,8,8,0.96)' : 'transparent';
+  const borderBottom = scrolled ? '1px solid var(--border)' : 'none';
+
   return (
     <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: scrolled ? 'rgba(8,8,8,0.96)' : 'transparent',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      background: navBg,
       backdropFilter: scrolled ? 'blur(16px)' : 'none',
-      borderBottom: scrolled ? '1px solid var(--border)' : 'none',
+      borderBottom,
       transition: 'all 0.4s ease',
       padding: '0 16px',
       height: 60,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
 
-      {/* Logo area */}
+      {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <div style={{
-          width: 32, height: 32,
-          borderRadius: 2,
+          width: 32, height: 32, borderRadius: 4,
           overflow: 'hidden',
           border: '1px solid var(--border-bright)',
           flexShrink: 0,
@@ -72,12 +74,13 @@ export default function Navbar() {
               color: active === l ? 'var(--green)' : 'var(--text-dim)',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.75rem', letterSpacing: '0.12em',
-              transition: 'color 0.2s', padding: '8px 16px',
+              transition: 'color 0.2s', padding: '8px 14px',
               position: 'relative',
             }}
               onMouseEnter={e => e.target.style.color = 'var(--text)'}
               onMouseLeave={e => e.target.style.color = active === l ? 'var(--green)' : 'var(--text-dim)'}
-            >{l.toUpperCase()}
+            >
+              {l.toUpperCase()}
               {active === l && (
                 <span style={{
                   position: 'absolute', bottom: 0, left: '50%',
@@ -90,7 +93,8 @@ export default function Navbar() {
             </button>
           </li>
         ))}
-        <li style={{ marginLeft: 8 }}>
+
+        <li style={{ marginLeft: 6 }}>
           <a href="/admin" style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '0.7rem',
@@ -99,7 +103,7 @@ export default function Navbar() {
             letterSpacing: '0.12em',
             padding: '6px 12px',
             border: '1px solid var(--border)',
-            borderRadius: 2,
+            borderRadius: 6,
             transition: 'all 0.2s',
             display: 'inline-block',
           }}
@@ -115,24 +119,29 @@ export default function Navbar() {
         </li>
       </ul>
 
-      {/* Hamburger */}
-      <button onClick={() => setOpen(!open)} style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        display: 'none', padding: 8,
-        minWidth: 40, minHeight: 40,
-        alignItems: 'center', justifyContent: 'center',
-      }} className="hamburger" aria-label="menu">
-        {open ? <IconX size={22} color="var(--green)" /> : <IconMenu size={22} color="var(--green)" />}
-      </button>
+      {/* Right side mobile: hamburger only */}
+      <div style={{ display: 'none', alignItems: 'center', gap: 8 }} className="mobile-right">
+        <button onClick={() => setOpen(!open)} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          padding: 8,
+          minWidth: 40, minHeight: 40,
+          display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }} aria-label="menu">
+          {open ? <IconX size={22} color="var(--green)" /> : <IconMenu size={22} color="var(--green)" />}
+        </button>
+      </div>
 
       {/* Mobile menu */}
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0,
-          background: 'rgba(8,8,8,0.99)', backdropFilter: 'blur(16px)',
+          background: 'rgba(8,8,8,0.99)',
+          backdropFilter: 'blur(16px)',
           borderBottom: '1px solid var(--border)',
           padding: '8px 0 20px',
           animation: 'slideUp 0.2s ease',
+          zIndex: 200,
         }}>
           {links.map(l => (
             <button key={l} onClick={() => scrollTo(l)} style={{
@@ -157,7 +166,7 @@ export default function Navbar() {
       <style>{`
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
-          .hamburger { display: flex !important; }
+          .mobile-right { display: flex !important; }
         }
       `}</style>
     </nav>

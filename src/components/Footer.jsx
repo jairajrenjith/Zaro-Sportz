@@ -52,7 +52,7 @@ export default function Footer() {
             letterSpacing: '0.03em',
             maxWidth: 200,
           }}>
-            6-a-side Football Turf<br />
+            6's Football Turf<br />
             Cricket Nets<br />
             Open 6 AM – 11 PM daily
           </p>

@@ -22,7 +22,7 @@ function slotLabel(h) {
   return `${fmt(h, startS)} – ${fmt(endH, endS)}`;
 }
 
-const SPORTS = ['Football (6-a-side)', 'Cricket'];
+const SPORTS = ["6's Football", 'Cricket'];
 const TABS = ['BOOKINGS', 'SLOTS', 'OVERVIEW'];
 
 const PAYMENT_LABELS = {

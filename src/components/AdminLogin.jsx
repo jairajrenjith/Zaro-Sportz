@@ -29,103 +29,114 @@ export default function AdminLogin({ onLogin }) {
       overflow: 'hidden',
     }}>
 
-      {/* ── LEFT ACCENT PANEL ── */}
+      {/* ── LEFT PANEL ── */}
       <div className="admin-login-left" style={{
-        width: '42%',
-        background: 'linear-gradient(155deg, #0d1a09 0%, #0a0f07 40%, #080808 100%)',
+        width: '45%',
+        background: '#0a0a0a',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: '40px',
+        padding: '44px',
         position: 'relative',
         overflow: 'hidden',
       }}>
 
-        {/* Subtle green glow top-left */}
+        {/* Radial glows — same as hero */}
         <div style={{
-          position: 'absolute', top: 0, left: 0,
-          width: 300, height: 300,
-          background: 'radial-gradient(ellipse at top left, rgba(200,241,53,0.08) 0%, transparent 65%)',
+          position: 'absolute', top: 0, right: 0,
+          width: 320, height: 320,
+          background: 'radial-gradient(ellipse at top right, var(--green-dim) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
-
-        {/* Grid lines */}
         <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `
-            linear-gradient(rgba(200,241,53,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(200,241,53,0.025) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
+          position: 'absolute', bottom: 0, left: 0,
+          width: 240, height: 240,
+          background: 'radial-gradient(ellipse at bottom left, var(--green-glow) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
           <div style={{
-            width: 34, height: 34,
+            width: 36, height: 36,
             border: '1px solid var(--border-bright)',
-            overflow: 'hidden',
-            flexShrink: 0,
+            overflow: 'hidden', flexShrink: 0, borderRadius: 4,
           }}>
             <img src={logo} alt="Zaro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div style={{
             fontFamily: 'var(--font-display)',
-            color: 'var(--green)', fontSize: '1.1rem',
-            letterSpacing: '0.1em',
+            color: 'var(--green)', fontSize: '1.1rem', letterSpacing: '0.12em',
           }}>ZARO SPORTZ</div>
         </div>
 
-        {/* Big headline */}
-        <div style={{ position: 'relative' }}>
+        {/* Centre — venue photo card + info, mirroring hero right column */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          {/* Venue photo card — same style as hero */}
           <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.62rem', color: 'var(--green)',
-            letterSpacing: '0.22em', marginBottom: 20,
-            display: 'flex', alignItems: 'center', gap: 10,
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            overflow: 'hidden',
+            position: 'relative',
+            height: 170,
+            background: 'var(--card-bg)',
           }}>
-            <div style={{ width: 24, height: 1, background: 'var(--green)', opacity: 0.6 }} />
-            ADMIN ACCESS
-          </div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(2.8rem, 4.5vw, 4.2rem)',
-            color: 'var(--text)',
-            lineHeight: 0.92,
-            letterSpacing: '0.03em',
-          }}>
-            MANAGE<br />
-            <span style={{ color: 'var(--green)' }}>BOOKINGS</span><br />
-            &amp; SLOTS
+            <img
+              src={logo}
+              alt="Zaro Sportz"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.88 }}
+            />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: 14, left: 16,
+              fontFamily: 'var(--font-display)', fontWeight: 700, color: '#fff',
+              fontSize: '1.05rem', letterSpacing: '0.08em',
+            }}>
+              ZARO SPORTZ
+              <span style={{ color: 'var(--green)', marginLeft: 8, fontSize: '0.8rem' }}>MANIYUR</span>
+            </div>
           </div>
 
-          {/* Decorative line */}
-          <div style={{
-            marginTop: 28,
-            width: 48, height: 2,
-            background: 'linear-gradient(90deg, var(--green), transparent)',
-          }} />
+          {/* Headline */}
+          <div style={{ paddingTop: 8 }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.6rem', color: 'var(--green)',
+              letterSpacing: '0.2em',
+              display: 'flex', alignItems: 'center', gap: 8,
+              marginBottom: 16,
+            }}>
+              <div style={{ width: 16, height: 1, background: 'var(--green)', opacity: 0.5 }} />
+              ADMIN ACCESS
+            </div>
 
-          <div style={{
-            marginTop: 20,
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.72rem',
-            color: 'var(--text-dim)',
-            lineHeight: 1.8,
-            letterSpacing: '0.03em',
-          }}>
-            View and manage all bookings,<br />
-            block slots, and track payments.
+            <div style={{ fontFamily: 'var(--font-display)', lineHeight: 0.92, letterSpacing: '0.02em' }}>
+              <div style={{ fontSize: 'clamp(2rem, 3.2vw, 3rem)', color: 'var(--text)' }}>MANAGE</div>
+              <div style={{ fontSize: 'clamp(2rem, 3.2vw, 3rem)', color: 'var(--green)', margin: '5px 0' }}>BOOKINGS</div>
+              <div style={{ fontSize: 'clamp(2rem, 3.2vw, 3rem)', color: 'var(--text)' }}>&amp; SLOTS</div>
+            </div>
+
+            <p style={{
+              marginTop: 18,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.7rem', color: 'var(--text-dim)', lineHeight: 1.8, letterSpacing: '0.03em',
+            }}>
+              View and manage all bookings,<br />
+              block slots, and track payments.
+            </p>
           </div>
         </div>
 
         {/* Bottom tag */}
         <div style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: '0.6rem', color: 'var(--muted)',
-          letterSpacing: '0.14em',
+          fontSize: '0.58rem', color: 'var(--muted)',
+          letterSpacing: '0.16em',
           display: 'flex', alignItems: 'center', gap: 10,
           position: 'relative',
         }}>
@@ -157,21 +168,17 @@ export default function AdminLogin({ onLogin }) {
             <div style={{
               width: 36, height: 36,
               border: '1px solid var(--border-bright)',
-              overflow: 'hidden', flexShrink: 0,
+              overflow: 'hidden', flexShrink: 0, borderRadius: 4,
             }}>
               <img src={logo} alt="Zaro" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div>
-              <div style={{
-                fontFamily: 'var(--font-display)',
-                color: 'var(--green)', fontSize: '1.2rem',
-                letterSpacing: '0.1em',
-              }}>ZARO SPORTZ</div>
-              <div style={{
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--muted)', fontSize: '0.56rem',
-                letterSpacing: '0.14em', marginTop: 2,
-              }}>ADMIN ACCESS</div>
+              <div style={{ fontFamily: 'var(--font-display)', color: 'var(--green)', fontSize: '1.2rem', letterSpacing: '0.1em' }}>
+                ZARO SPORTZ
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.56rem', letterSpacing: '0.14em', marginTop: 2 }}>
+                ADMIN ACCESS
+              </div>
             </div>
           </div>
 
@@ -182,7 +189,7 @@ export default function AdminLogin({ onLogin }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: 28,
             background: error ? 'rgba(255,59,59,0.06)' : '#0f0f0f',
-            transition: 'all 0.3s',
+            transition: 'all 0.3s', borderRadius: 4,
           }}>
             <IconShield size={22} color={error ? 'var(--red)' : 'var(--green)'} />
           </div>
@@ -195,8 +202,7 @@ export default function AdminLogin({ onLogin }) {
           <p style={{
             fontFamily: 'var(--font-mono)',
             color: 'var(--muted)', fontSize: '0.68rem',
-            letterSpacing: '0.12em', marginBottom: 40,
-            lineHeight: 1.4,
+            letterSpacing: '0.12em', marginBottom: 40, lineHeight: 1.4,
           }}>ENTER YOUR CREDENTIALS TO CONTINUE</p>
 
           {/* Password field */}
@@ -205,9 +211,7 @@ export default function AdminLogin({ onLogin }) {
               fontFamily: 'var(--font-mono)',
               fontSize: '0.62rem', color: 'var(--green)',
               letterSpacing: '0.16em',
-              display: 'flex', alignItems: 'center',
-              gap: 8,
-              marginBottom: 10,
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
             }}>
               <IconLock size={11} color="var(--green)" />
               PASSWORD
@@ -219,11 +223,9 @@ export default function AdminLogin({ onLogin }) {
               onChange={e => setPw(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               style={{
-                borderRadius: 0,
                 borderColor: error ? 'var(--red)' : 'var(--border-bright)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '1rem',
-                letterSpacing: '0.2em',
+                fontSize: '1rem', letterSpacing: '0.2em',
                 transition: 'border-color 0.2s',
               }}
               autoFocus
@@ -244,17 +246,13 @@ export default function AdminLogin({ onLogin }) {
           <button onClick={handleSubmit} style={{
             width: '100%',
             background: 'var(--green)',
-            color: '#080808',
-            border: 'none',
-            padding: '15px',
+            color: '#000000',
+            border: 'none', padding: '15px',
             fontFamily: 'var(--font-display)',
-            fontSize: '1.15rem',
-            letterSpacing: '0.1em',
-            cursor: 'pointer',
-            marginTop: 20,
-            borderRadius: 0,
+            fontSize: '1.15rem', fontWeight: 700,
+            letterSpacing: '0.1em', cursor: 'pointer',
+            marginTop: 20, borderRadius: 8,
             transition: 'background 0.2s, transform 0.15s',
-            clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
           }}
             onMouseEnter={e => { e.currentTarget.style.background = '#d8ff50'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'var(--green)'; e.currentTarget.style.transform = 'translateY(0)'; }}
@@ -262,23 +260,11 @@ export default function AdminLogin({ onLogin }) {
             AUTHENTICATE
           </button>
 
-          {/* Divider */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            margin: '28px 0 0',
-          }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.12em' }}>OR</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          </div>
-
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 24 }}>
             <a href="/" style={{
               fontFamily: 'var(--font-mono)',
-              color: 'var(--muted)',
-              fontSize: '0.65rem',
-              letterSpacing: '0.12em',
-              textDecoration: 'none',
+              color: 'var(--muted)', fontSize: '0.65rem',
+              letterSpacing: '0.12em', textDecoration: 'none',
               transition: 'color 0.2s',
               display: 'flex', alignItems: 'center', gap: 8,
             }}
@@ -298,6 +284,13 @@ export default function AdminLogin({ onLogin }) {
         }
         @media (max-width: 900px) and (min-width: 641px) {
           .admin-login-left { width: 36% !important; padding: 28px !important; }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-5px); }
+          80% { transform: translateX(5px); }
         }
       `}</style>
     </div>

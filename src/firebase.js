@@ -1,6 +1,10 @@
 // src/firebase.js
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
+import { 
+  getAuth, 
+  signInAnonymously 
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyB4bqvC9lsrAp0Z5NgJVV48ZxOyeGV0ttw',
@@ -15,3 +19,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
+const auth = getAuth(app);
+
+signInAnonymously(auth)
+  .then(() => {
+    console.log('Anonymous auth success');
+  })
+  .catch((error) => {
+    console.error('Anonymous auth error:', error);
+  });

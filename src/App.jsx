@@ -1,6 +1,7 @@
 // src/App.jsx
 import { useEffect, useState } from 'react';
 import './styles/global.css';
+import { ThemeProvider } from './ThemeContext';
 
 import BallAnimation from './components/BallAnimation';
 import Navbar from './components/Navbar';
@@ -15,7 +16,6 @@ import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
 
 function useAdminRoute() {
-  // Simple client-side routing — check if URL path is /admin
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
     const handler = () => setPath(window.location.pathname);
@@ -25,7 +25,7 @@ function useAdminRoute() {
   return path;
 }
 
-export default function App() {
+function MainApp() {
   const path = useAdminRoute();
   const [adminAuthed, setAdminAuthed] = useState(
     () => sessionStorage.getItem('zaro_admin') === '1'
@@ -43,7 +43,6 @@ export default function App() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  // Scroll reveal for main site
   useEffect(() => {
     if (path === '/admin') return;
     const obs = new IntersectionObserver(
@@ -57,13 +56,11 @@ export default function App() {
     return () => obs.disconnect();
   }, [path]);
 
-  // Admin route
   if (path === '/admin') {
     if (!adminAuthed) return <AdminLogin onLogin={handleLogin} />;
     return <AdminPanel onLogout={handleLogout} />;
   }
 
-  // Main site
   return (
     <>
       <BallAnimation />
@@ -78,5 +75,13 @@ export default function App() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
   );
 }

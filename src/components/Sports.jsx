@@ -6,16 +6,16 @@ import cricketImg from '../assets/sports/cricket.jpg';
 
 const sports = [
   {
-    name: 'Football',
-    sub: '6-a-side',
+    name: "6'S FOOTBALL",
+    sub: 'Football',
     Icon: IconFootball,
     img: footballImg,
-    desc: 'Full-turf 6\'s football. Floodlit arena for day and night games. Professional astroturf surface maintained to match standard.',
-    features: ['Floodlit Turf', '6-a-side Format', 'Night Games', 'Astroturf Surface'],
+    desc: "Full-turf 6's football. Floodlit arena for day and night games. Professional astroturf surface maintained to match standard.",
+    features: ['Floodlit Turf', "6's Format", 'Night Games', 'Astroturf Surface'],
   },
   {
-    name: 'Cricket',
-    sub: 'Nets',
+    name: 'CRICKET',
+    sub: 'Cricket',
     Icon: IconCricket,
     img: cricketImg,
     desc: 'Professional cricket nets with quality pitch surface. Perfect for serious practice sessions, batting drills and bowling run-ups.',
@@ -37,7 +37,7 @@ export default function Sports() {
 
   return (
     <section id="sports" style={{
-      background: 'var(--dark)',
+      background: 'var(--bg2)',
       borderTop: '1px solid var(--border)',
     }}>
       <div className="section-label">WHAT WE OFFER</div>
@@ -47,9 +47,8 @@ export default function Sports() {
       <div className="sports-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 2,
+        gap: 12,
         maxWidth: 900, margin: '0 auto',
-        border: '1px solid var(--border)',
       }}>
         {sports.map((s, i) => (
           <div
@@ -62,15 +61,16 @@ export default function Sports() {
               position: 'relative',
               transition: 'background 0.3s',
               cursor: 'default',
-              borderRight: i === 0 ? '1px solid var(--border)' : 'none',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
             }}
-            onMouseEnter={e => e.currentTarget.style.background = '#161810'}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
             onMouseLeave={e => e.currentTarget.style.background = 'var(--card-bg)'}
           >
             {/* Image area */}
             <div style={{
               height: 220,
-              borderRadius: 2,
+              borderRadius: 8,
               marginBottom: 24,
               overflow: 'hidden',
               position: 'relative',
@@ -82,15 +82,14 @@ export default function Sports() {
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 onError={e => { e.target.style.display = 'none'; }}
               />
-              {/* subtle bottom vignette only — keeps image clear */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(to top, rgba(8,8,8,0.45) 0%, transparent 45%)',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 45%)',
                 pointerEvents: 'none',
               }} />
             </div>
 
-            {/* Sport name */}
+            {/* Sport label */}
             <div style={{ marginBottom: 6 }}>
               <span style={{
                 fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
@@ -98,9 +97,9 @@ export default function Sports() {
               }}>{s.sub.toUpperCase()}</span>
             </div>
             <h3 style={{
-              fontFamily: 'var(--font-display)', color: 'var(--text)',
+              fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--text)',
               fontSize: 'clamp(1.6rem, 5vw, 2.2rem)', letterSpacing: '0.06em', marginBottom: 14,
-            }}>{s.name.toUpperCase()}</h3>
+            }}>{s.name}</h3>
 
             <p style={{
               color: 'var(--text-dim)', fontSize: '0.85rem',
@@ -114,7 +113,7 @@ export default function Sports() {
                 <span key={f} style={{
                   background: 'transparent', border: '1px solid var(--border-bright)',
                   color: 'var(--text-dim)', fontSize: '0.66rem',
-                  padding: '4px 8px', borderRadius: 1,
+                  padding: '4px 8px', borderRadius: 6,
                   fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
                 }}>{f}</span>
               ))}
@@ -127,13 +126,6 @@ export default function Sports() {
         @media (max-width: 560px) {
           .sports-grid {
             grid-template-columns: 1fr !important;
-          }
-          .sports-grid > div {
-            border-right: none !important;
-            border-bottom: 1px solid var(--border);
-          }
-          .sports-grid > div:last-child {
-            border-bottom: none;
           }
         }
       `}</style>
