@@ -1,5 +1,3 @@
-// src/components/Icons.jsx — All proper SVG icons, zero emojis
-
 export function IconPhone({ size = 20, color = 'currentColor' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,22 +194,16 @@ export function IconActivity({ size = 20, color = 'currentColor' }) {
   );
 }
 
-// Zaro brand wordmark — used as logo replacement
 export function ZaroWordmark({ height = 28, color = '#c8f135' }) {
   return (
     <svg height={height} viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Z */}
       <polyline points="2,4 22,4 2,36 22,36" stroke={color} strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" fill="none"/>
-      {/* A */}
       <polyline points="30,36 40,4 50,36" stroke={color} strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" fill="none"/>
       <line x1="33" y1="24" x2="47" y2="24" stroke={color} strokeWidth="3.5" strokeLinecap="square"/>
-      {/* R */}
       <polyline points="58,36 58,4 72,4" stroke={color} strokeWidth="3.5" strokeLinecap="square" strokeLinejoin="miter" fill="none"/>
       <path d="M58 20 Q72 20 72 12 Q72 4 58 4" stroke={color} strokeWidth="3.5" strokeLinecap="square" fill="none"/>
       <line x1="66" y1="20" x2="76" y2="36" stroke={color} strokeWidth="3.5" strokeLinecap="square"/>
-      {/* O */}
       <rect x="84" y="4" width="18" height="32" rx="1" stroke={color} strokeWidth="3.5" fill="none"/>
-      {/* SPORTZ */}
       <text x="108" y="36" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize="34" fill={color} letterSpacing="2">SPORTZ</text>
     </svg>
   );

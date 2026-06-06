@@ -1,4 +1,3 @@
-// src/components/AdminPanel.jsx
 import { useState, useEffect } from 'react';
 import {
   subscribeToAll, subscribeToDate, deleteBooking,
@@ -7,7 +6,7 @@ import {
 } from '../utils/bookingStore';
 import {
   IconTrash, IconLogout, IconCalendar, IconChevronDown,
-  IconPlus, IconMinus, IconCheck, IconX, IconWhatsApp, IconTrophy,
+  IconPlus, IconMinus, IconCheck, IconX, IconWhatsApp, IconTrophy, IconClock,
 } from './Icons';
 import logo from '../assets/zaro_logo.jpg';
 
@@ -25,13 +24,23 @@ function slotLabel(h) {
 const SPORTS = ["6's Football", 'Cricket'];
 const TABS = ['BOOKINGS', 'SLOTS', 'OVERVIEW'];
 
+function IconHourglass({ size = 12, color = '#f0a020' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M5 22h14"/>
+      <path d="M5 2h14"/>
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+    </svg>
+  );
+}
+
 const STATUS_LABELS = {
-  pending:   { label: '⏳ PENDING APPROVAL',  color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
-  accepted:  { label: '✓ ACCEPTED',           color: 'var(--green)', bg: '#0e1a0a', border: 'var(--green)50' },
-  rejected:  { label: '✕ REJECTED',           color: 'var(--red)',   bg: '#140a0a', border: 'var(--red)40' },
+  pending:   { label: 'PENDING APPROVAL', icon: <IconHourglass size={11} color="#f0a020" />, color: '#f0a020', bg: '#1a1200', border: '#f0a02040' },
+  accepted:  { label: '✓ ACCEPTED',        color: 'var(--green)', bg: '#0e1a0a', border: 'var(--green)50' },
+  rejected:  { label: '✕ REJECTED',        color: 'var(--red)',   bg: '#140a0a', border: 'var(--red)40' },
 };
 
-// Helper: group slots by groupId
 function groupSlotsByBooking(slotsObj) {
   const groups = {};
   const slotIds = Object.keys(slotsObj).map(Number).sort((a, b) => a - b);
@@ -92,7 +101,6 @@ export default function AdminPanel({ onLogout }) {
   const [dropOpen, setDropOpen] = useState(false);
   const [tab, setTab] = useState('BOOKINGS');
 
-  // Add slot form
   const [addMode, setAddMode] = useState(false);
   const [addSlotIds, setAddSlotIds] = useState([]);
   const [addName, setAddName] = useState('');
@@ -101,22 +109,17 @@ export default function AdminPanel({ onLogout }) {
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState('');
 
-  // Accept confirm modal
-  const [acceptModal, setAcceptModal] = useState(null); // { date, ids, booking }
+  const [acceptModal, setAcceptModal] = useState(null);
 
-  // Reject confirm modal
-  const [rejectModal, setRejectModal] = useState(null); // { date, ids, booking }
+  const [rejectModal, setRejectModal] = useState(null);
 
-  // Tournament cancel confirm modal
-  const [tournamentModal, setTournamentModal] = useState(null); // { date, ids, booking }
+  const [tournamentModal, setTournamentModal] = useState(null);
 
-  // Subscribe to all bookings
   useEffect(() => {
     const unsub = subscribeToAll((all) => setBookings(all));
     return unsub;
   }, []);
 
-  // Subscribe to selected date slots
   useEffect(() => {
     const unsub = subscribeToDate(selectedDate, (slots) => setSlotsForDate(slots));
     return unsub;
@@ -131,7 +134,6 @@ export default function AdminPanel({ onLogout }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [dropOpen]);
 
-  // Accept booking → update status → WhatsApp customer
   const handleAccept = async () => {
     if (!acceptModal) return;
     const { date, ids, booking: b } = acceptModal;
@@ -147,13 +149,11 @@ export default function AdminPanel({ onLogout }) {
     setAcceptModal(null);
   };
 
-  // Reject booking → delete booking → WhatsApp customer
   const handleReject = async () => {
     if (!rejectModal) return;
     const { date, ids, booking: b } = rejectModal;
     const dateLabel = parseDateLabel(date);
     const slotLines = ids.map(id => slotLabel(id));
-    // Delete all slots in the group
     for (const sid of ids) {
       await deleteBooking(date, sid);
     }
@@ -164,13 +164,11 @@ export default function AdminPanel({ onLogout }) {
     setRejectModal(null);
   };
 
-  // Tournament cancel → delete booking → WhatsApp customer
   const handleTournamentCancel = async () => {
     if (!tournamentModal) return;
     const { date, ids, booking: b } = tournamentModal;
     const dateLabel = parseDateLabel(date);
     const slotLines = ids.map(id => slotLabel(id));
-    // Delete all slots in the group
     for (const sid of ids) {
       await deleteBooking(date, sid);
     }
@@ -181,7 +179,6 @@ export default function AdminPanel({ onLogout }) {
     setTournamentModal(null);
   };
 
-  // Plain delete (no WA)
   const handleDelete = async (date, slotId) => {
     await deleteBooking(date, slotId);
   };
@@ -217,37 +214,45 @@ export default function AdminPanel({ onLogout }) {
   const selectedLabel = dates.find(d => d.value === selectedDate)?.label || parseDateLabel(selectedDate);
 
   const totalBooked = Object.values(bookings).reduce((sum, day) => sum + Object.keys(day).length, 0);
-  const todayBooked = Object.keys(bookings[getTodayStr()] || {}).length;
   const daysWithBookings = Object.keys(bookings).length;
   const addTotal = addSlotIds.reduce((sum, id) => sum + (id >= 19 ? 1200 : 1000), 0);
 
-  // Count pending across all dates
   const pendingCount = Object.values(bookings).reduce((sum, day) => {
     return sum + Object.values(day).filter(b => b.status === 'pending').length;
   }, 0);
 
+  function renderStatusLabel(st) {
+    if (st.icon) {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          {st.icon} {st.label}
+        </span>
+      );
+    }
+    return st.label;
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--black)', fontFamily: 'var(--font-ui)' }}>
 
-      {/* Top nav */}
       <div style={{
         background: '#040404', borderBottom: '1px solid var(--border)',
-        padding: '0 28px', height: 60,
+        padding: '0 16px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 30, height: 30, border: '1px solid var(--border-bright)', overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 28, height: 28, border: '1px solid var(--border-bright)', overflow: 'hidden', flexShrink: 0 }}>
             <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div>
-            <span style={{ fontFamily: 'var(--font-display)', color: 'var(--green)', fontSize: '1.1rem', letterSpacing: '0.1em' }}>ZARO SPORTZ</span>
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', letterSpacing: '0.14em', marginLeft: 10 }}>ADMIN</span>
+            <span style={{ fontFamily: 'var(--font-display)', color: 'var(--green)', fontSize: '1rem', letterSpacing: '0.1em' }}>ZARO SPORTZ</span>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', letterSpacing: '0.14em', marginLeft: 8 }}>ADMIN</span>
           </div>
         </div>
         <button onClick={onLogout} style={{
           display: 'flex', alignItems: 'center', gap: 7, background: 'transparent',
-          border: '1px solid var(--border)', color: 'var(--muted)', padding: '7px 14px',
+          border: '1px solid var(--border)', color: 'var(--muted)', padding: '7px 12px',
           cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.68rem',
           letterSpacing: '0.1em', borderRadius: 0, transition: 'all 0.2s',
         }}
@@ -258,37 +263,42 @@ export default function AdminPanel({ onLogout }) {
         </button>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px 80px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 12px 80px' }}>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 32, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 24, border: '1px solid var(--border)' }}>
           {[
             { label: 'TOTAL BOOKINGS', value: totalBooked, color: 'var(--green)' },
-            { label: 'PENDING APPROVAL', value: pendingCount, color: pendingCount > 0 ? '#f0a020' : 'var(--muted)' },
+            {
+              label: 'PENDING APPROVAL',
+              value: pendingCount,
+              color: pendingCount > 0 ? '#f0a020' : 'var(--muted)',
+              icon: pendingCount > 0 ? <IconHourglass size={14} color="#f0a020" /> : null,
+            },
             { label: 'ACTIVE DAYS', value: daysWithBookings, color: '#60a5fa' },
           ].map((s, i) => (
-            <div key={s.label} style={{ background: 'var(--card-bg)', borderRight: i < 2 ? '1px solid var(--border)' : 'none', padding: '20px 24px' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '3rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', letterSpacing: '0.14em', marginTop: 6 }}>{s.label}</div>
+            <div key={s.label} style={{ background: 'var(--card-bg)', borderRight: i < 2 ? '1px solid var(--border)' : 'none', padding: '16px 14px' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 6vw, 3rem)', color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.58rem', letterSpacing: '0.12em', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                {s.icon}{s.label}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               background: 'none', border: 'none',
               borderBottom: tab === t ? '2px solid var(--green)' : '2px solid transparent',
               color: tab === t ? 'var(--green)' : 'var(--muted)',
               fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.14em',
-              padding: '10px 20px', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1,
-              position: 'relative',
+              padding: '10px 16px', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1,
+              position: 'relative', whiteSpace: 'nowrap', flexShrink: 0,
             }}>
               {t}
               {t === 'BOOKINGS' && pendingCount > 0 && (
                 <span style={{
-                  position: 'absolute', top: 6, right: 6,
+                  position: 'absolute', top: 6, right: 3,
                   background: '#f0a020', color: '#000',
                   borderRadius: '50%', width: 14, height: 14,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -299,8 +309,7 @@ export default function AdminPanel({ onLogout }) {
           ))}
         </div>
 
-        {/* Date selector */}
-        <div style={{ marginBottom: 28, position: 'relative' }} className="admin-date-drop">
+        <div style={{ marginBottom: 24, position: 'relative' }} className="admin-date-drop">
           <label style={adminLabelStyle}>
             <IconCalendar size={12} color="var(--green)" />
             SELECT DATE
@@ -363,7 +372,6 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* ── BOOKINGS TAB ── */}
         {tab === 'BOOKINGS' && (() => {
           const groups = groupSlotsByBooking(slotsForDate);
           const pendingGroups = groups.filter(g => g.booking.status === 'pending');
@@ -374,11 +382,13 @@ export default function AdminPanel({ onLogout }) {
           return (
             <div>
               <div style={{ marginBottom: 36 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
                   <span style={sectionHeadStyle}>BOOKINGS</span>
                   <span style={countBadge('var(--green)')}>{bookedSlots.length} slots</span>
                   {pendingGroups.length > 0 && (
-                    <span style={countBadge('#f0a020')}>{pendingGroups.length} pending</span>
+                    <span style={{ ...countBadge('#f0a020'), display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <IconHourglass size={10} color="#f0a020" /> {pendingGroups.length} pending
+                    </span>
                   )}
                 </div>
 
@@ -400,7 +410,7 @@ export default function AdminPanel({ onLogout }) {
                             : isPending
                               ? '1px solid #f0a02040'
                               : '1px solid var(--border)',
-                          padding: '16px 18px',
+                          padding: '14px 14px',
                           display: 'flex', alignItems: 'flex-start',
                           justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
                           transition: 'background 0.2s',
@@ -409,10 +419,10 @@ export default function AdminPanel({ onLogout }) {
                           onMouseLeave={e => e.currentTarget.style.background = 'var(--card-bg)'}
                         >
                           <div style={{ flex: 1, minWidth: 160 }}>
-                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)', fontSize: '0.82rem', letterSpacing: '0.04em', marginBottom: 6 }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)', fontSize: '0.95rem', letterSpacing: '0.04em', marginBottom: 6, fontWeight: 500 }}>
                               {slotLines}
                               {ids.length > 1 && (
-                                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', marginLeft: 10 }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginLeft: 10 }}>
                                   ({ids.length} SLOTS)
                                 </span>
                               )}
@@ -433,14 +443,14 @@ export default function AdminPanel({ onLogout }) {
                                 border: `1px solid ${st.border || st.color + '40'}`,
                                 padding: '3px 10px', fontSize: '0.62rem',
                                 fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
                               }}>
-                                {st.label}
+                                {renderStatusLabel(st)}
                               </span>
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            {/* Accept button — only for pending */}
                             {isPending && (
                               <button onClick={() => setAcceptModal({ date: selectedDate, ids, booking: b })}
                                 style={{
@@ -458,7 +468,6 @@ export default function AdminPanel({ onLogout }) {
                               </button>
                             )}
 
-                            {/* Reject button — only for pending */}
                             {isPending && (
                               <button onClick={() => setRejectModal({ date: selectedDate, ids, booking: b })}
                                 style={{
@@ -476,7 +485,6 @@ export default function AdminPanel({ onLogout }) {
                               </button>
                             )}
 
-                            {/* Accepted badge */}
                             {isAccepted && (
                               <span style={{
                                 display: 'flex', alignItems: 'center', gap: 5,
@@ -498,7 +506,6 @@ export default function AdminPanel({ onLogout }) {
                               RS. {totalPrice.toLocaleString()}
                             </span>
 
-                            {/* Tournament cancel button — only for accepted */}
                             {isAccepted && (
                               <button
                                 onClick={() => setTournamentModal({ date: selectedDate, ids, booking: b })}
@@ -541,10 +548,9 @@ export default function AdminPanel({ onLogout }) {
           );
         })()}
 
-        {/* ── SLOTS TAB ── */}
         {tab === 'SLOTS' && (
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <span style={sectionHeadStyle}>SLOT MANAGEMENT</span>
                 <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginTop: 4, letterSpacing: '0.08em' }}>
@@ -566,9 +572,8 @@ export default function AdminPanel({ onLogout }) {
               )}
             </div>
 
-            {/* Add slot form */}
             {addMode && (
-              <div style={{ background: 'var(--card-bg)', border: '1px solid var(--green)', padding: '24px', marginBottom: 24 }}>
+              <div style={{ background: 'var(--card-bg)', border: '1px solid var(--green)', padding: '20px', marginBottom: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.72rem', letterSpacing: '0.14em' }}>
                     ADD BOOKING — {selectedLabel}
@@ -584,7 +589,7 @@ export default function AdminPanel({ onLogout }) {
                     SELECT SLOTS
                     <span style={{ color: 'var(--muted)', fontSize: '0.62rem', marginLeft: 6 }}>— multi-select</span>
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 2 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 2 }}>
                     {ALL_SLOT_IDS.map(id => {
                       const isBooked = !!slotsForDate[id];
                       const isSelected = addSlotIds.includes(id);
@@ -598,8 +603,8 @@ export default function AdminPanel({ onLogout }) {
                             color: isDisabled ? '#2a2a2a' : isSelected ? '#080808' : id >= 19 ? 'var(--yellow)' : 'var(--text-dim)',
                             border: '1px solid',
                             borderColor: isDisabled ? 'var(--border)' : isSelected ? 'var(--green)' : 'var(--border)',
-                            padding: '8px 6px', cursor: isDisabled ? 'not-allowed' : 'pointer',
-                            fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.02em',
+                            padding: '9px 4px', cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            fontFamily: 'var(--font-mono)', fontSize: '0.78rem', letterSpacing: '0.02em',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                             opacity: isDisabled ? 0.3 : 1, borderRadius: 0, transition: 'all 0.12s',
                             position: 'relative',
@@ -611,7 +616,7 @@ export default function AdminPanel({ onLogout }) {
                             </span>
                           )}
                           <span>{slotLabel(id)}</span>
-                          <span style={{ fontSize: '0.58rem', opacity: 0.7 }}>
+                          <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>
                             {isBooked ? 'BOOKED' : isPast ? 'PAST' : `RS.${id >= 19 ? 1200 : 1000}`}
                           </span>
                         </button>
@@ -687,8 +692,7 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* All slots grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 2 }}>
               {ALL_SLOT_IDS.map(id => {
                 const b = slotsForDate[id];
                 const isBooked = !!b;
@@ -701,7 +705,7 @@ export default function AdminPanel({ onLogout }) {
                     padding: '12px', position: 'relative',
                     opacity: isPast && !isBooked ? 0.45 : 1,
                   }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: isBooked ? 'var(--green)' : isPast ? 'var(--muted)' : 'var(--text-dim)', letterSpacing: '0.04em', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: isBooked ? 'var(--green)' : isPast ? 'var(--muted)' : 'var(--text-dim)', letterSpacing: '0.03em', marginBottom: 5, fontWeight: 500 }}>
                       {slotLabel(id)}
                     </div>
                     {isBooked ? (
@@ -712,7 +716,9 @@ export default function AdminPanel({ onLogout }) {
                           fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
                           color: (STATUS_LABELS[b.status] || STATUS_LABELS.pending).color,
                           letterSpacing: '0.06em', marginBottom: 8,
+                          display: 'flex', alignItems: 'center', gap: 4,
                         }}>
+                          {b.status === 'pending' && <IconHourglass size={10} color="#f0a020" />}
                           {(STATUS_LABELS[b.status] || STATUS_LABELS.pending).label}
                         </div>
                         <button onClick={() => handleDelete(selectedDate, id)}
@@ -759,7 +765,6 @@ export default function AdminPanel({ onLogout }) {
           </div>
         )}
 
-        {/* ── OVERVIEW TAB ── */}
         {tab === 'OVERVIEW' && (
           <div>
             <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -796,14 +801,17 @@ export default function AdminPanel({ onLogout }) {
                           padding: '12px 16px', display: 'flex', alignItems: 'center',
                           justifyContent: 'space-between', gap: 8, flexWrap: 'wrap',
                         }}>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
-                            <span style={{ color: 'var(--green)', marginRight: 12 }}>{slotLines}</span>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+                            <span style={{ color: 'var(--green)', marginRight: 12, fontSize: '0.85rem', fontWeight: 500 }}>{slotLines}</span>
                             {ids.length > 1 && (
                               <span style={{ color: 'var(--muted)', fontSize: '0.6rem', marginRight: 12 }}>({ids.length} slots)</span>
                             )}
                             <span style={{ color: 'var(--text)', marginRight: 8 }}>{b.name}</span>
                             <span style={{ color: 'var(--muted)', marginRight: 8 }}>{b.phone}</span>
-                            <span style={{ color: st.color, fontSize: '0.62rem' }}>{st.label}</span>
+                            <span style={{ color: st.color, fontSize: '0.62rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              {isPending && <IconHourglass size={10} color="#f0a020" />}
+                              {st.label}
+                            </span>
                           </div>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                             {isPending && (
@@ -863,16 +871,15 @@ export default function AdminPanel({ onLogout }) {
         )}
       </div>
 
-      {/* ── ACCEPT BOOKING MODAL ── */}
       {acceptModal && (
         <div onClick={() => setAcceptModal(null)} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
+          zIndex: 200, padding: 16, animation: 'fadeIn 0.15s ease',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             background: 'var(--card-bg)', border: '1px solid var(--green)',
-            padding: 28, maxWidth: 420, width: '100%',
+            padding: 24, maxWidth: 420, width: '100%',
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6 }}>
               ACCEPT BOOKING
@@ -880,7 +887,6 @@ export default function AdminPanel({ onLogout }) {
             <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.2rem', letterSpacing: '0.06em', marginBottom: 16 }}>
               CONFIRM &amp; NOTIFY CUSTOMER?
             </h3>
-
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
               color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
@@ -892,7 +898,6 @@ export default function AdminPanel({ onLogout }) {
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(acceptModal.date)}</div>
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{acceptModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
             </div>
-
             <div style={{ display: 'flex', gap: 2 }}>
               <button onClick={handleAccept} style={{
                 flex: 1, background: 'var(--green)', color: '#080808', border: 'none',
@@ -920,16 +925,15 @@ export default function AdminPanel({ onLogout }) {
         </div>
       )}
 
-      {/* ── REJECT BOOKING MODAL ── */}
       {rejectModal && (
         <div onClick={() => setRejectModal(null)} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
+          zIndex: 200, padding: 16, animation: 'fadeIn 0.15s ease',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             background: 'var(--card-bg)', border: '1px solid var(--red)',
-            padding: 28, maxWidth: 420, width: '100%',
+            padding: 24, maxWidth: 420, width: '100%',
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--red)', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6 }}>
               REJECT BOOKING
@@ -938,9 +942,8 @@ export default function AdminPanel({ onLogout }) {
               REJECT &amp; NOTIFY CUSTOMER?
             </h3>
             <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.66rem', lineHeight: 1.7, marginBottom: 20 }}>
-              This will remove the booking and send a polite WhatsApp message to the customer informing them of the rejection.
+              This will remove the booking and send a polite WhatsApp message to the customer.
             </p>
-
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
               color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
@@ -952,7 +955,6 @@ export default function AdminPanel({ onLogout }) {
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(rejectModal.date)}</div>
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{rejectModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
             </div>
-
             <div style={{ display: 'flex', gap: 2 }}>
               <button onClick={handleReject} style={{
                 flex: 1, background: 'var(--red)', color: '#fff', border: 'none',
@@ -980,16 +982,15 @@ export default function AdminPanel({ onLogout }) {
         </div>
       )}
 
-      {/* ── TOURNAMENT CANCEL MODAL ── */}
       {tournamentModal && (
         <div onClick={() => setTournamentModal(null)} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
+          zIndex: 200, padding: 16, animation: 'fadeIn 0.15s ease',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             background: 'var(--card-bg)', border: '1px solid #f0a020',
-            padding: 28, maxWidth: 420, width: '100%',
+            padding: 24, maxWidth: 420, width: '100%',
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', color: '#f0a020', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
               <IconTrophy size={14} color="#f0a020" /> TOURNAMENT CANCELLATION
@@ -1000,7 +1001,6 @@ export default function AdminPanel({ onLogout }) {
             <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.66rem', lineHeight: 1.7, marginBottom: 20 }}>
               This will delete the booking and send a WhatsApp message to the customer informing them of the cancellation due to a tournament.
             </p>
-
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
               color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
@@ -1011,7 +1011,6 @@ export default function AdminPanel({ onLogout }) {
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(tournamentModal.date)}</div>
               <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{tournamentModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
             </div>
-
             <div style={{ display: 'flex', gap: 2 }}>
               <button onClick={handleTournamentCancel} style={{
                 flex: 1, background: '#f0a020', color: '#000', border: 'none',
@@ -1037,7 +1036,7 @@ export default function AdminPanel({ onLogout }) {
       )}
 
       <style>{`
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
           .add-form-fields { grid-template-columns: 1fr !important; }
         }
         @keyframes fadeIn {

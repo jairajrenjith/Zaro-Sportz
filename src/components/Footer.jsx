@@ -1,4 +1,3 @@
-// src/components/Footer.jsx
 import logo from '../assets/zaro_logo.jpg';
 import { IconInstagram, IconWhatsApp, IconPhone } from './Icons';
 
@@ -10,7 +9,6 @@ export default function Footer() {
       background: '#040404',
       borderTop: '1px solid var(--border)',
     }}>
-      {/* Main footer */}
       <div style={{
         maxWidth: 1100, margin: '0 auto',
         padding: '40px 20px 28px',
@@ -19,7 +17,6 @@ export default function Footer() {
         gap: 40, alignItems: 'start',
       }} className="footer-grid">
 
-        {/* Brand */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
             <div style={{
@@ -58,10 +55,8 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Center rule */}
         <div className="footer-rule" style={{ borderLeft: '1px solid var(--border)', height: '100%', alignSelf: 'stretch' }} />
 
-        {/* Contact info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{
             fontFamily: 'var(--font-mono)',
@@ -94,7 +89,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div style={{
         borderTop: '1px solid var(--border)',
         padding: '14px 20px',

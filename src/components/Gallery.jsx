@@ -1,4 +1,3 @@
-// src/components/Gallery.jsx
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { IconX } from './Icons';
@@ -19,7 +18,6 @@ const images = [g1,g2,g3,g4,g5,g6,g7,g8,g9,g10].map((src, i) => ({
   alt: `Zaro Sportz - Field ${i + 1}`,
 }));
 
-// Rendered via portal directly into document.body — nothing from the page bleeds through
 function Lightbox({ index, onClose, onPrev, onNext, total }) {
   return createPortal(
     <div
@@ -34,12 +32,10 @@ function Lightbox({ index, onClose, onPrev, onNext, total }) {
         alignItems: 'center',
         justifyContent: 'center',
         animation: 'lbFadeIn 0.15s ease',
-        // padding reserves space for X (top) and nav (bottom)
         padding: '56px 12px 76px',
         boxSizing: 'border-box',
       }}
     >
-      {/* Image — fills the safe zone, never behind buttons */}
       <img
         src={images[index].src}
         alt={images[index].alt}
@@ -56,7 +52,6 @@ function Lightbox({ index, onClose, onPrev, onNext, total }) {
         }}
       />
 
-      {/* ✕ close — top-right */}
       <button
         onClick={e => { e.stopPropagation(); onClose(); }}
         aria-label="Close"
@@ -76,7 +71,6 @@ function Lightbox({ index, onClose, onPrev, onNext, total }) {
         <IconX size={18} color="#fff" />
       </button>
 
-      {/* ← counter → — bottom centre */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -128,9 +122,8 @@ function Lightbox({ index, onClose, onPrev, onNext, total }) {
 }
 
 export default function Gallery() {
-  const [lightbox, setLightbox] = useState(null); // null | index
+  const [lightbox, setLightbox] = useState(null);
   const ref = useRef();
-  // Store scroll position once when lightbox first opens; don't reset on arrow navigation
   const savedScrollY = useRef(0);
   const isOpen = useRef(false);
 
@@ -143,11 +136,9 @@ export default function Gallery() {
     return () => obs.disconnect();
   }, []);
 
-  // Lock body scroll — only save scroll position when lightbox OPENS (not on arrow nav)
   useEffect(() => {
     if (lightbox !== null) {
       if (!isOpen.current) {
-        // Lightbox just opened — capture scroll position once
         savedScrollY.current = window.scrollY;
         isOpen.current = true;
         document.body.style.position = 'fixed';
@@ -155,9 +146,7 @@ export default function Gallery() {
         document.body.style.width = '100%';
         document.body.style.overflow = 'hidden';
       }
-      // If lightbox was already open (arrow nav), don't touch scroll lock — it's already applied
     } else {
-      // Lightbox closed — restore scroll position
       if (isOpen.current) {
         isOpen.current = false;
         document.body.style.position = '';
@@ -168,11 +157,9 @@ export default function Gallery() {
       }
     }
     return () => {
-      // Only clean up styles on unmount
     };
   }, [lightbox]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       document.body.style.position = '';
@@ -182,7 +169,6 @@ export default function Gallery() {
     };
   }, []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e) => {
       if (lightbox === null) return;
@@ -261,7 +247,6 @@ export default function Gallery() {
         ))}
       </div>
 
-      {/* Portal lightbox — rendered directly in document.body */}
       {lightbox !== null && (
         <Lightbox
           index={lightbox}

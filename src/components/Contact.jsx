@@ -1,4 +1,3 @@
-// src/components/Contact.jsx
 import { useEffect, useRef } from 'react';
 import { IconPhone, IconWhatsApp, IconInstagram, IconClock } from './Icons';
 
@@ -75,7 +74,6 @@ export default function Contact() {
               e.currentTarget.querySelector('.contact-accent').style.opacity = '0';
             }}
           >
-            {/* Accent bar */}
             <div className="contact-accent" style={{
               position: 'absolute', top: 0, left: 0, right: 0,
               height: 2,
@@ -114,7 +112,6 @@ export default function Contact() {
         ))}
       </div>
 
-      {/* Hours */}
       <div style={{
         maxWidth: 740, margin: '0 auto',
         background: 'var(--card-bg)',

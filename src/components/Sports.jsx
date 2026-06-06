@@ -1,4 +1,3 @@
-// src/components/Sports.jsx
 import { useEffect, useRef } from 'react';
 import { IconFootball, IconCricket } from './Icons';
 import footballImg from '../assets/sports/football.jpg';
@@ -67,7 +66,6 @@ export default function Sports() {
             onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
             onMouseLeave={e => e.currentTarget.style.background = 'var(--card-bg)'}
           >
-            {/* Image area */}
             <div style={{
               height: 220,
               borderRadius: 8,
@@ -89,7 +87,6 @@ export default function Sports() {
               }} />
             </div>
 
-            {/* Sport label */}
             <div style={{ marginBottom: 6 }}>
               <span style={{
                 fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
@@ -107,7 +104,6 @@ export default function Sports() {
               fontFamily: 'var(--font-mono)',
             }}>{s.desc}</p>
 
-            {/* Feature tags */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {s.features.map(f => (
                 <span key={f} style={{

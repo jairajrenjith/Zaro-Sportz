@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { useState, useEffect } from 'react';
 import logo from '../assets/zaro_logo.jpg';
 import { IconMenu, IconX } from './Icons';
@@ -37,7 +36,6 @@ export default function Navbar() {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
 
-      {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <div style={{
@@ -65,7 +63,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Desktop links */}
       <ul style={{ display: 'flex', gap: 0, listStyle: 'none', alignItems: 'center' }} className="nav-desktop">
         {links.map(l => (
           <li key={l}>
@@ -119,7 +116,6 @@ export default function Navbar() {
         </li>
       </ul>
 
-      {/* Right side mobile: hamburger only */}
       <div style={{ display: 'none', alignItems: 'center', gap: 8 }} className="mobile-right">
         <button onClick={() => setOpen(!open)} style={{
           background: 'none', border: 'none', cursor: 'pointer',
@@ -132,7 +128,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0,

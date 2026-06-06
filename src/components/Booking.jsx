@@ -1,4 +1,3 @@
-// src/components/Booking.jsx
 import { useState, useEffect, useRef } from 'react';
 import {
   bookSlots, subscribeToDate,
@@ -40,7 +39,7 @@ export default function Booking() {
   const dates = getAvailableDates();
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [bookedMap, setBookedMap] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState([]);
   const [sport, setSport] = useState(SPORTS[0]);
   const [name, setName] = useState('');
@@ -55,11 +54,19 @@ export default function Booking() {
   useEffect(() => {
     setLoading(true);
     setSelected([]);
+
+    const timeout = setTimeout(() => setLoading(false), 4000);
+
     const unsub = subscribeToDate(selectedDate, (slots) => {
+      clearTimeout(timeout);
       setBookedMap(slots);
       setLoading(false);
     });
-    return unsub;
+
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, [selectedDate]);
 
   useEffect(() => {
@@ -80,7 +87,6 @@ export default function Booking() {
   }, [dropOpen]);
 
   const toggleSlot = (id) => {
-    // Only block if slot is accepted (truly booked) or past
     const slotData = bookedMap[id];
     const isAccepted = slotData?.status === 'accepted';
     if (isAccepted || isPastSlot(id, selectedDate)) return;
@@ -153,7 +159,6 @@ export default function Booking() {
         maxWidth: 740, margin: '0 auto',
       }}>
 
-        {/* DONE STATE */}
         {step === 'done' && (
           <div style={{
             background: 'var(--card-bg)',
@@ -194,10 +199,8 @@ export default function Booking() {
           </div>
         )}
 
-        {/* BOOKING FORM */}
         {step === 'form' && (
           <>
-            {/* Pricing strip */}
             <div className="pricing-strip" style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr',
               border: '1px solid var(--border)',
@@ -216,13 +219,12 @@ export default function Booking() {
                   display: 'flex', flexDirection: 'column', gap: 4,
                 }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--muted)', letterSpacing: '0.12em' }}>{p.label}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-dim)' }}>{p.time}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--text-dim)', fontWeight: 500 }}>{p.time}</div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(1rem, 3vw, 1.2rem)', color: p.color, letterSpacing: '0.04em', marginTop: 2 }}>{p.price}</div>
                 </div>
               ))}
             </div>
 
-            {/* Main form */}
             <div style={{
               background: 'var(--card-bg)',
               border: '1px solid var(--border)',
@@ -230,7 +232,6 @@ export default function Booking() {
               borderRadius: 12,
             }}>
 
-              {/* Date dropdown */}
               <div style={{ marginBottom: 24, position: 'relative' }} className="date-dropdown">
                 <label style={labelStyle}>
                   <IconCalendar size={13} color="var(--green)" />
@@ -244,7 +245,7 @@ export default function Booking() {
                   padding: '12px 16px',
                   color: 'var(--text)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.85rem',
+                  fontSize: '0.9rem',
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   borderRadius: 8,
@@ -276,7 +277,7 @@ export default function Booking() {
                           borderBottom: '1px solid var(--border)',
                           color: d.value === selectedDate ? 'var(--green)' : 'var(--text-dim)',
                           padding: '11px 16px', cursor: 'pointer', textAlign: 'left',
-                          fontFamily: 'var(--font-mono)', fontSize: '0.8rem',
+                          fontFamily: 'var(--font-mono)', fontSize: '0.85rem',
                           transition: 'background 0.15s',
                         }}
                         onMouseEnter={e => { if (d.value !== selectedDate) e.currentTarget.style.background = 'var(--bg)'; }}
@@ -287,7 +288,6 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Slot grid */}
               <div style={{ marginBottom: 24 }}>
                 <label style={{ ...labelStyle, marginBottom: 12 }}>
                   <IconClock size={13} color="var(--green)" />
@@ -304,14 +304,13 @@ export default function Booking() {
                 <div className="slot-grid">
                   {ALL_SLOTS.map(slot => {
                     const slotData = bookedMap[slot.id];
-                    // Only truly booked (accepted) slots are shown as unavailable to users
                     const isBooked = slotData?.status === 'accepted';
                     const isPast = isPastSlot(slot.id, selectedDate);
                     const isUnavailable = isBooked;
                     const isActive = selected.includes(slot.id);
                     return (
                       <button key={slot.id} onClick={() => toggleSlot(slot.id)}
-                        disabled={isUnavailable || isPast || loading}
+                        disabled={isUnavailable || isPast}
                         style={{
                           background: isBooked
                             ? 'var(--bg)'
@@ -335,12 +334,12 @@ export default function Booking() {
                               : isActive
                                 ? 'var(--green)'
                                 : slot.peak ? '#f0c42022' : 'var(--border)',
-                          padding: '9px 4px',
-                          cursor: isUnavailable || isPast || loading ? 'not-allowed' : 'pointer',
+                          padding: '10px 4px',
+                          cursor: isUnavailable || isPast ? 'not-allowed' : 'pointer',
                           fontFamily: 'var(--font-mono)',
-                          fontSize: '0.68rem',
+                          fontSize: '0.78rem',
                           transition: 'all 0.12s',
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                           opacity: isPast ? 0.3 : 1,
                           position: 'relative',
                           borderRadius: 8,
@@ -352,8 +351,8 @@ export default function Booking() {
                             <IconCheck size={10} color="#000000" />
                           </span>
                         )}
-                        <span>{slot.label}</span>
-                        <span style={{ fontSize: '0.6rem', opacity: isBooked ? 1 : 0.7, fontWeight: isBooked ? 600 : 400 }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 500, lineHeight: 1.2 }}>{slot.label}</span>
+                        <span style={{ fontSize: '0.65rem', opacity: isBooked ? 1 : 0.7, fontWeight: isBooked ? 600 : 400 }}>
                           {isBooked ? 'BOOKED' : isPast ? 'PAST' : `RS.${slot.price}`}
                         </span>
                       </button>
@@ -362,7 +361,6 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Summary bar */}
               {selected.length > 0 && (
                 <div style={{
                   background: 'var(--green)',
@@ -387,7 +385,6 @@ export default function Booking() {
                 </div>
               )}
 
-              {/* Name, Phone & Sport type */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}
                 className="booking-fields">
                 <div>
@@ -408,7 +405,6 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Sport type selector */}
               <div style={{ marginBottom: 20 }}>
                 <label style={labelStyle}>SPORT TYPE</label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -432,7 +428,6 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Tournament disclaimer */}
               <div style={{
                 background: '#0f0e00',
                 border: '1px solid #f0c42030',
@@ -499,11 +494,20 @@ export default function Booking() {
       <style>{`
         .slot-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
           gap: 6px;
         }
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
           .booking-fields { grid-template-columns: 1fr !important; }
+          .slot-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 5px !important;
+          }
+          .pricing-strip > div {
+            padding: 10px 12px !important;
+          }
+        }
+        @media (max-width: 360px) {
           .slot-grid {
             grid-template-columns: repeat(2, 1fr) !important;
           }

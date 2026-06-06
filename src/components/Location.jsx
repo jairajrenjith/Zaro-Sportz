@@ -1,4 +1,3 @@
-// src/components/Location.jsx
 import { useEffect, useRef } from 'react';
 import { IconMapPin, IconNavigation } from './Icons';
 
@@ -25,7 +24,6 @@ export default function Location() {
 
       <div ref={ref} className="reveal" style={{ maxWidth: 820, margin: '0 auto' }}>
 
-        {/* Address strip */}
         <div style={{
           background: 'var(--card-bg)',
           border: '1px solid var(--border)',
@@ -46,14 +44,12 @@ export default function Location() {
           </span>
         </div>
 
-        {/* Map */}
         <div style={{
           overflow: 'hidden',
           border: '1px solid var(--border)',
           borderBottom: 'none',
           position: 'relative',
         }}>
-          {/* Styled map overlay frame */}
           <div style={{
             position: 'relative',
             background: 'var(--bg)',
@@ -73,7 +69,6 @@ export default function Location() {
               referrerPolicy="no-referrer-when-downgrade"
               title="Zaro Sportz Location"
             />
-            {/* Green accent pin overlay */}
             <div style={{
               position: 'absolute',
               top: 12, left: 12,
@@ -108,7 +103,6 @@ export default function Location() {
           </div>
         </div>
 
-        {/* CTA buttons */}
         <div className="location-btns" style={{
           display: 'flex', gap: 0, flexWrap: 'wrap',
           border: '1px solid var(--border)',

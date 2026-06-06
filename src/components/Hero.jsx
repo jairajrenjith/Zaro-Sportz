@@ -1,4 +1,3 @@
-// src/components/Hero.jsx
 import { useEffect, useRef } from 'react';
 import logo from '../assets/zaro_logo.jpg';
 import { IconArrowRight, IconClock, IconMapPin } from './Icons';
@@ -31,7 +30,6 @@ export default function Hero() {
       overflow: 'hidden',
     }}>
 
-      {/* Subtle corner accents */}
       <div style={{
         position: 'absolute', top: 0, right: 0,
         width: 400, height: 400,
@@ -45,7 +43,6 @@ export default function Hero() {
         pointerEvents: 'none',
       }} />
 
-      {/* Main content */}
       <div ref={ref} className="reveal hero-outer">
         <div className="hero-grid" style={{
           maxWidth: 1200,
@@ -57,9 +54,7 @@ export default function Hero() {
           alignItems: 'center',
         }}>
 
-          {/* LEFT COLUMN */}
           <div>
-            {/* Overline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <div style={{ width: 36, height: 2, background: 'var(--green)', flexShrink: 0, borderRadius: 2 }} />
               <span style={{
@@ -68,7 +63,6 @@ export default function Hero() {
               }}>MANIYUR · KERALA · EST. 2024</span>
             </div>
 
-            {/* Big title */}
             <div className="hero-title-wrap" style={{ marginBottom: 28 }}>
               <span className="hero-title-zaro" style={{
                 fontFamily: 'var(--font-display)',
@@ -91,7 +85,6 @@ export default function Hero() {
               }}>SPORTZ</span>
             </div>
 
-            {/* Sub tagline */}
             <p style={{
               fontFamily: 'var(--font-ui)',
               color: 'var(--text-dim)',
@@ -103,7 +96,6 @@ export default function Hero() {
               Kick start your passion.
             </p>
 
-            {/* CTA buttons */}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 40 }}>
               <button className="btn" onClick={() =>
                 document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })
@@ -118,7 +110,6 @@ export default function Hero() {
               </button>
             </div>
 
-            {/* Info pills */}
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8,
@@ -137,10 +128,8 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
           <div className="hero-right" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-            {/* Logo / venue photo card */}
             <div style={{
               border: '1px solid var(--border)',
               borderRadius: 12,
@@ -169,7 +158,6 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Stats grid */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
             }}>
@@ -209,7 +197,6 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* Quick book strip */}
             <div style={{
               background: 'var(--card-bg)',
               border: '1px solid var(--border)',
@@ -245,7 +232,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <div className="scroll-indicator" style={{
         position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,

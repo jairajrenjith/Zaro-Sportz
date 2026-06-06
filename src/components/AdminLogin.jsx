@@ -1,4 +1,3 @@
-// src/components/AdminLogin.jsx
 import { useState } from 'react';
 import { IconLock, IconShield } from './Icons';
 import logo from '../assets/zaro_logo.jpg';
@@ -32,7 +31,6 @@ export default function AdminLogin({ onLogin }) {
       overflow: 'hidden',
     }}>
 
-      {/* Subtle background glows */}
       <div style={{
         position: 'absolute', top: 0, right: 0,
         width: 400, height: 400,
@@ -52,7 +50,6 @@ export default function AdminLogin({ onLogin }) {
         position: 'relative',
       }}>
 
-        {/* Logo */}
         <div style={{
           display: 'flex',
           alignItems: 'center', gap: 12,
@@ -76,7 +73,6 @@ export default function AdminLogin({ onLogin }) {
           </div>
         </div>
 
-        {/* Shield icon */}
         <div style={{
           width: 56, height: 56,
           border: `1px solid ${error ? 'var(--red)' : 'var(--border-bright)'}`,
@@ -102,7 +98,6 @@ export default function AdminLogin({ onLogin }) {
           textAlign: 'center',
         }}>ENTER YOUR CREDENTIALS TO CONTINUE</p>
 
-        {/* Password field */}
         <div style={{ marginBottom: 4 }}>
           <label style={{
             fontFamily: 'var(--font-mono)',

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import './styles/global.css';
 import { ThemeProvider } from './ThemeContext';
 
-import BallAnimation from './components/BallAnimation';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Sports from './components/Sports';
@@ -63,7 +62,6 @@ function MainApp() {
 
   return (
     <>
-      <BallAnimation />
       <Navbar />
       <main>
         <Hero />
