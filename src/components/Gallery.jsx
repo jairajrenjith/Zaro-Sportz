@@ -130,7 +130,9 @@ function Lightbox({ index, onClose, onPrev, onNext, total }) {
 export default function Gallery() {
   const [lightbox, setLightbox] = useState(null); // null | index
   const ref = useRef();
+  // Store scroll position once when lightbox first opens; don't reset on arrow navigation
   const savedScrollY = useRef(0);
+  const isOpen = useRef(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -141,28 +143,44 @@ export default function Gallery() {
     return () => obs.disconnect();
   }, []);
 
-  // Lock body scroll — no jump when opening/closing
+  // Lock body scroll — only save scroll position when lightbox OPENS (not on arrow nav)
   useEffect(() => {
     if (lightbox !== null) {
-      savedScrollY.current = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollY.current}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      if (!isOpen.current) {
+        // Lightbox just opened — capture scroll position once
+        savedScrollY.current = window.scrollY;
+        isOpen.current = true;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${savedScrollY.current}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+      }
+      // If lightbox was already open (arrow nav), don't touch scroll lock — it's already applied
     } else {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      window.scrollTo({ top: savedScrollY.current, behavior: 'instant' });
+      // Lightbox closed — restore scroll position
+      if (isOpen.current) {
+        isOpen.current = false;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo({ top: savedScrollY.current, behavior: 'instant' });
+      }
     }
+    return () => {
+      // Only clean up styles on unmount
+    };
+  }, [lightbox]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.width = '';
       document.body.style.overflow = '';
     };
-  }, [lightbox]);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {

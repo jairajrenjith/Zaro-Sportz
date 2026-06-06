@@ -46,7 +46,7 @@ export async function getSlotsForDate(date) {
 
 // bookSlots: writes one booking entry per slot under bookings/<date>/<slotId>
 // All slots from the same booking share a groupId so admin sees them as one request
-export async function bookSlots({ date, slotIds, name, phone, sport, paymentStatus = 'pending', amountPaid = 0 }) {
+export async function bookSlots({ date, slotIds, name, phone, sport, status = 'pending' }) {
   const now = new Date().toISOString();
   // groupId ties all slots from the same booking together
   const groupId = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -54,8 +54,7 @@ export async function bookSlots({ date, slotIds, name, phone, sport, paymentStat
     await set(ref(db, `bookings/${date}/${id}`), {
       name, phone, sport,
       bookedAt: now,
-      paymentStatus,
-      amountPaid,
+      status,
       groupId,
       totalSlots: slotIds.length,
       allSlotIds: slotIds,
@@ -64,9 +63,9 @@ export async function bookSlots({ date, slotIds, name, phone, sport, paymentStat
   return await loadBookings();
 }
 
-export async function updatePaymentStatus(date, slotId, paymentStatus, amountPaid) {
-  await set(ref(db, `bookings/${date}/${slotId}/paymentStatus`), paymentStatus);
-  await set(ref(db, `bookings/${date}/${slotId}/amountPaid`), amountPaid);
+// Update booking status for a single slot (used when admin accepts)
+export async function updateBookingStatus(date, slotId, status) {
+  await set(ref(db, `bookings/${date}/${slotId}/status`), status);
 }
 
 export async function deleteBooking(date, slotId) {

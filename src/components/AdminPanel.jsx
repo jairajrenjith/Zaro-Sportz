@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import {
   subscribeToAll, subscribeToDate, deleteBooking,
   getAvailableDates, parseDateLabel, getTodayStr,
-  bookSlots, updatePaymentStatus,
+  bookSlots, updateBookingStatus,
 } from '../utils/bookingStore';
 import {
   IconTrash, IconLogout, IconCalendar, IconChevronDown,
-  IconPlus, IconMinus, IconCheck, IconX, IconWhatsApp,
+  IconPlus, IconMinus, IconCheck, IconX, IconWhatsApp, IconTrophy,
 } from './Icons';
 import logo from '../assets/zaro_logo.jpg';
 
@@ -25,19 +25,15 @@ function slotLabel(h) {
 const SPORTS = ["6's Football", 'Cricket'];
 const TABS = ['BOOKINGS', 'SLOTS', 'OVERVIEW'];
 
-const PAYMENT_LABELS = {
-  pending:       { label: '⏳ NO PAYMENT YET',        color: 'var(--muted)', bg: '#111',    border: '#33332a' },
-  advance_paid:  { label: '⚠ AWAITING VERIFICATION', color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
-  advance_exact: { label: '⚠ AWAITING VERIFICATION', color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
-  paid_less:     { label: '⚠ PARTIAL — UNVERIFIED',  color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
-  paid_more:     { label: '⚠ OVERPAID — UNVERIFIED', color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
-  verified:      { label: '✓ VERIFIED',              color: 'var(--green)', bg: '#0e1a0a', border: 'var(--green)50' },
+const STATUS_LABELS = {
+  pending:   { label: '⏳ PENDING APPROVAL',  color: '#f0a020',      bg: '#1a1200', border: '#f0a02040' },
+  accepted:  { label: '✓ ACCEPTED',           color: 'var(--green)', bg: '#0e1a0a', border: 'var(--green)50' },
+  rejected:  { label: '✕ REJECTED',           color: 'var(--red)',   bg: '#140a0a', border: 'var(--red)40' },
 };
 
-// Helper: group slots by groupId (or by name+phone+bookedAt if no groupId)
+// Helper: group slots by groupId
 function groupSlotsByBooking(slotsObj) {
   const groups = {};
-  const seen = new Set();
   const slotIds = Object.keys(slotsObj).map(Number).sort((a, b) => a - b);
   for (const id of slotIds) {
     const b = slotsObj[id];
@@ -48,47 +44,43 @@ function groupSlotsByBooking(slotsObj) {
   return Object.values(groups);
 }
 
-// WhatsApp message templates (admin to customer) - plain text only, no emojis
-function buildConfirmMessage(b, dateLabel, slotLines, totalPaid, balanceDue, status) {
+function buildAcceptMessage(b, dateLabel, slotLines) {
   const slotsText = Array.isArray(slotLines) ? slotLines.join(', ') : slotLines;
-
-  if (status === 'advance_paid' || status === 'advance_exact') {
-    return (
-      `Hi ${b.name},\n\n` +
-      `Your booking at Zaro Sportz is CONFIRMED.\n\n` +
-      `Date: ${dateLabel}\n` +
-      `Slots: ${slotsText}\n` +
-      `Sport: ${b.sport}\n` +
-      `Advance Paid: Rs.${totalPaid}\n` +
-      `Balance Due at Venue: Rs.${balanceDue}\n\n` +
-      `See you on the field!\n- Zaro Sportz`
-    );
-  }
-  if (status === 'paid_less') {
-    return (
-      `Hi ${b.name},\n\n` +
-      `Your booking at Zaro Sportz is confirmed.\n\n` +
-      `Date: ${dateLabel}\n` +
-      `Slots: ${slotsText}\n` +
-      `Sport: ${b.sport}\n` +
-      `Paid: Rs.${totalPaid}\n` +
-      `Remaining: Rs.${balanceDue} - please pay at the venue.\n\n` +
-      `- Zaro Sportz`
-    );
-  }
-  if (status === 'paid_more') {
-    return (
-      `Hi ${b.name},\n\n` +
-      `Your booking at Zaro Sportz is CONFIRMED.\n\n` +
-      `Date: ${dateLabel}\n` +
-      `Slots: ${slotsText}\n` +
-      `Sport: ${b.sport}\n` +
-      `Amount Paid: Rs.${totalPaid} (Rs.${Math.abs(balanceDue)} extra)\n\n` +
-      `See you on the field!\n- Zaro Sportz`
-    );
-  }
   return (
-    `Hi ${b.name}, your booking at Zaro Sportz (${slotsText}, ${dateLabel}) is confirmed.\n- Zaro Sportz`
+    `Hi ${b.name},\n\n` +
+    `Great news! Your booking at Zaro Sportz has been ACCEPTED.\n\n` +
+    `Date: ${dateLabel}\n` +
+    `Slots: ${slotsText}\n` +
+    `Sport: ${b.sport}\n\n` +
+    `Please arrive a few minutes early. Payment to be settled at the venue.\n\n` +
+    `See you on the field!\n- Zaro Sportz`
+  );
+}
+
+function buildRejectMessage(b, dateLabel, slotLines) {
+  const slotsText = Array.isArray(slotLines) ? slotLines.join(', ') : slotLines;
+  return (
+    `Hi ${b.name},\n\n` +
+    `Thank you for your interest in booking at Zaro Sportz. We regret to inform you that we are unable to confirm your booking request at this time.\n\n` +
+    `Date: ${dateLabel}\n` +
+    `Slots: ${slotsText}\n` +
+    `Sport: ${b.sport}\n\n` +
+    `We apologize for any inconvenience caused. Please feel free to choose a different time slot and we will do our best to accommodate you.\n\n` +
+    `Thank you for your understanding.\n- Zaro Sportz`
+  );
+}
+
+function buildTournamentCancelMessage(b, dateLabel, slotLines) {
+  const slotsText = Array.isArray(slotLines) ? slotLines.join(', ') : slotLines;
+  return (
+    `Hi ${b.name},\n\n` +
+    `We regret to inform you that your booking at Zaro Sportz has been cancelled.\n\n` +
+    `Date: ${dateLabel}\n` +
+    `Slots: ${slotsText}\n` +
+    `Sport: ${b.sport}\n\n` +
+    `Reason: A tournament has been scheduled for this time slot. We apologize for the inconvenience.\n\n` +
+    `Please feel free to rebook for another date. We look forward to seeing you!\n\n` +
+    `- Zaro Sportz`
   );
 }
 
@@ -98,7 +90,6 @@ export default function AdminPanel({ onLogout }) {
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [dates] = useState(getAvailableDates());
   const [dropOpen, setDropOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [tab, setTab] = useState('BOOKINGS');
 
   // Add slot form
@@ -110,12 +101,16 @@ export default function AdminPanel({ onLogout }) {
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState('');
 
-  // Verify payment modal
-  const [verifyModal, setVerifyModal] = useState(null); // { date, slotId, booking }
-  const [verifyStatus, setVerifyStatus] = useState('advance_exact');
-  const [verifyAmount, setVerifyAmount] = useState('');
+  // Accept confirm modal
+  const [acceptModal, setAcceptModal] = useState(null); // { date, ids, booking }
 
-  // Subscribe to all bookings (for overview stats)
+  // Reject confirm modal
+  const [rejectModal, setRejectModal] = useState(null); // { date, ids, booking }
+
+  // Tournament cancel confirm modal
+  const [tournamentModal, setTournamentModal] = useState(null); // { date, ids, booking }
+
+  // Subscribe to all bookings
   useEffect(() => {
     const unsub = subscribeToAll((all) => setBookings(all));
     return unsub;
@@ -136,9 +131,59 @@ export default function AdminPanel({ onLogout }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [dropOpen]);
 
+  // Accept booking → update status → WhatsApp customer
+  const handleAccept = async () => {
+    if (!acceptModal) return;
+    const { date, ids, booking: b } = acceptModal;
+    for (const sid of ids) {
+      await updateBookingStatus(date, sid, 'accepted');
+    }
+    const dateLabel = parseDateLabel(date);
+    const slotLines = ids.map(id => slotLabel(id));
+    const msg = encodeURIComponent(buildAcceptMessage(b, dateLabel, slotLines));
+    const customerPhone = b.phone.replace(/\D/g, '');
+    const fullPhone = customerPhone.startsWith('91') ? customerPhone : `91${customerPhone}`;
+    window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank');
+    setAcceptModal(null);
+  };
+
+  // Reject booking → delete booking → WhatsApp customer
+  const handleReject = async () => {
+    if (!rejectModal) return;
+    const { date, ids, booking: b } = rejectModal;
+    const dateLabel = parseDateLabel(date);
+    const slotLines = ids.map(id => slotLabel(id));
+    // Delete all slots in the group
+    for (const sid of ids) {
+      await deleteBooking(date, sid);
+    }
+    const msg = encodeURIComponent(buildRejectMessage(b, dateLabel, slotLines));
+    const customerPhone = b.phone.replace(/\D/g, '');
+    const fullPhone = customerPhone.startsWith('91') ? customerPhone : `91${customerPhone}`;
+    window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank');
+    setRejectModal(null);
+  };
+
+  // Tournament cancel → delete booking → WhatsApp customer
+  const handleTournamentCancel = async () => {
+    if (!tournamentModal) return;
+    const { date, ids, booking: b } = tournamentModal;
+    const dateLabel = parseDateLabel(date);
+    const slotLines = ids.map(id => slotLabel(id));
+    // Delete all slots in the group
+    for (const sid of ids) {
+      await deleteBooking(date, sid);
+    }
+    const msg = encodeURIComponent(buildTournamentCancelMessage(b, dateLabel, slotLines));
+    const customerPhone = b.phone.replace(/\D/g, '');
+    const fullPhone = customerPhone.startsWith('91') ? customerPhone : `91${customerPhone}`;
+    window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank');
+    setTournamentModal(null);
+  };
+
+  // Plain delete (no WA)
   const handleDelete = async (date, slotId) => {
     await deleteBooking(date, slotId);
-    setConfirmDelete(null);
   };
 
   const toggleAddSlot = (id) => {
@@ -155,7 +200,7 @@ export default function AdminPanel({ onLogout }) {
     await bookSlots({
       date: selectedDate, slotIds: addSlotIds,
       name: addName.trim(), phone: addPhone.trim(), sport: addSport,
-      paymentStatus: 'advance_exact', amountPaid: 0,
+      status: 'accepted',
     });
     const n = addName.trim();
     setAddMode(false);
@@ -164,44 +209,6 @@ export default function AdminPanel({ onLogout }) {
     setAddPhone('');
     setAddSuccess(`${addSlotIds.length} slot${addSlotIds.length > 1 ? 's' : ''} booked for ${n}.`);
     setTimeout(() => setAddSuccess(''), 3500);
-  };
-
-  const openVerify = (date, slotId, b) => {
-    // Gather all slots from the same group booking
-    const daySlots = date === selectedDate ? slotsForDate : (bookings[date] || {});
-    let groupSlotIds = [slotId];
-    if (b.groupId) {
-      groupSlotIds = Object.keys(daySlots)
-        .filter(id => daySlots[id]?.groupId === b.groupId)
-        .map(Number)
-        .sort((a, z) => a - z);
-    }
-    setVerifyModal({ date, slotId, booking: b, groupSlotIds });
-    setVerifyStatus('verified');
-    // Total advance already paid for all slots in group
-    setVerifyAmount(String(b.amountPaid || ''));
-  };
-
-  const handleVerify = async () => {
-    if (!verifyModal) return;
-    const { date, groupSlotIds } = verifyModal;
-    const paid = Number(verifyAmount) || 0;
-    // Update ALL slots in this group with the same payment status
-    for (const sid of groupSlotIds) {
-      await updatePaymentStatus(date, sid, verifyStatus, paid);
-    }
-    // Build one combined WhatsApp message for all slots
-    const dateLabel = parseDateLabel(date);
-    const b = { ...verifyModal.booking, paymentStatus: verifyStatus, amountPaid: paid };
-    const slotLines = groupSlotIds.map(id => slotLabel(id));
-    // Calculate balance: total slot price minus what was paid
-    const totalPrice = groupSlotIds.reduce((sum, id) => sum + (id >= 19 ? 1200 : 1000), 0);
-    const balanceDue = verifyStatus === 'paid_more' ? paid - totalPrice : totalPrice - paid;
-    const msg = encodeURIComponent(buildConfirmMessage(b, dateLabel, slotLines, paid, balanceDue, verifyStatus));
-    const customerPhone = b.phone.replace(/\D/g, '');
-    const fullPhone = customerPhone.startsWith('91') ? customerPhone : `91${customerPhone}`;
-    window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank');
-    setVerifyModal(null);
   };
 
   const bookedSlots = ALL_SLOT_IDS.filter(id => slotsForDate[id]);
@@ -213,6 +220,11 @@ export default function AdminPanel({ onLogout }) {
   const todayBooked = Object.keys(bookings[getTodayStr()] || {}).length;
   const daysWithBookings = Object.keys(bookings).length;
   const addTotal = addSlotIds.reduce((sum, id) => sum + (id >= 19 ? 1200 : 1000), 0);
+
+  // Count pending across all dates
+  const pendingCount = Object.values(bookings).reduce((sum, day) => {
+    return sum + Object.values(day).filter(b => b.status === 'pending').length;
+  }, 0);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--black)', fontFamily: 'var(--font-ui)' }}>
@@ -252,7 +264,7 @@ export default function AdminPanel({ onLogout }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 32, border: '1px solid var(--border)' }}>
           {[
             { label: 'TOTAL BOOKINGS', value: totalBooked, color: 'var(--green)' },
-            { label: "TODAY'S BOOKED", value: todayBooked, color: 'var(--yellow)' },
+            { label: 'PENDING APPROVAL', value: pendingCount, color: pendingCount > 0 ? '#f0a020' : 'var(--muted)' },
             { label: 'ACTIVE DAYS', value: daysWithBookings, color: '#60a5fa' },
           ].map((s, i) => (
             <div key={s.label} style={{ background: 'var(--card-bg)', borderRight: i < 2 ? '1px solid var(--border)' : 'none', padding: '20px 24px' }}>
@@ -271,7 +283,19 @@ export default function AdminPanel({ onLogout }) {
               color: tab === t ? 'var(--green)' : 'var(--muted)',
               fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.14em',
               padding: '10px 20px', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1,
-            }}>{t}</button>
+              position: 'relative',
+            }}>
+              {t}
+              {t === 'BOOKINGS' && pendingCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 6, right: 6,
+                  background: '#f0a020', color: '#000',
+                  borderRadius: '50%', width: 14, height: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.5rem', fontWeight: 700,
+                }}>{pendingCount}</span>
+              )}
+            </button>
           ))}
         </div>
 
@@ -342,29 +366,38 @@ export default function AdminPanel({ onLogout }) {
         {/* ── BOOKINGS TAB ── */}
         {tab === 'BOOKINGS' && (() => {
           const groups = groupSlotsByBooking(slotsForDate);
+          const pendingGroups = groups.filter(g => g.booking.status === 'pending');
+          const acceptedGroups = groups.filter(g => g.booking.status === 'accepted');
+          const otherGroups = groups.filter(g => g.booking.status !== 'pending' && g.booking.status !== 'accepted');
+          const orderedGroups = [...pendingGroups, ...acceptedGroups, ...otherGroups];
+
           return (
             <div>
               <div style={{ marginBottom: 36 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <span style={sectionHeadStyle}>BOOKED SLOTS</span>
-                  <span style={countBadge('var(--green)')}>{bookedSlots.length}</span>
+                  <span style={sectionHeadStyle}>BOOKINGS</span>
+                  <span style={countBadge('var(--green)')}>{bookedSlots.length} slots</span>
+                  {pendingGroups.length > 0 && (
+                    <span style={countBadge('#f0a020')}>{pendingGroups.length} pending</span>
+                  )}
                 </div>
 
-                {groups.length === 0 ? (
+                {orderedGroups.length === 0 ? (
                   <div style={emptyState}>NO BOOKINGS FOR THIS DATE</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {groups.map(({ ids, booking: b }) => {
-                      const ps = PAYMENT_LABELS[b.paymentStatus] || PAYMENT_LABELS.pending;
-                      const isVerified = b.paymentStatus === 'verified';
+                    {orderedGroups.map(({ ids, booking: b }) => {
+                      const st = STATUS_LABELS[b.status] || STATUS_LABELS.pending;
+                      const isAccepted = b.status === 'accepted';
+                      const isPending = b.status === 'pending';
                       const totalPrice = ids.reduce((s, id) => s + (id >= 19 ? 1200 : 1000), 0);
                       const slotLines = ids.map(id => slotLabel(id)).join('  /  ');
                       return (
                         <div key={ids.join('-')} style={{
                           background: 'var(--card-bg)',
-                          border: isVerified
+                          border: isAccepted
                             ? '1px solid var(--green)50'
-                            : (b.paymentStatus && b.paymentStatus !== 'pending')
+                            : isPending
                               ? '1px solid #f0a02040'
                               : '1px solid var(--border)',
                           padding: '16px 18px',
@@ -376,7 +409,6 @@ export default function AdminPanel({ onLogout }) {
                           onMouseLeave={e => e.currentTarget.style.background = 'var(--card-bg)'}
                         >
                           <div style={{ flex: 1, minWidth: 160 }}>
-                            {/* Slot time(s) */}
                             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)', fontSize: '0.82rem', letterSpacing: '0.04em', marginBottom: 6 }}>
                               {slotLines}
                               {ids.length > 1 && (
@@ -395,35 +427,22 @@ export default function AdminPanel({ onLogout }) {
                             <div style={{ color: 'var(--muted)', fontSize: '0.62rem', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                               BOOKED {new Date(b.bookedAt).toLocaleString('en-IN')}
                             </div>
-                            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ marginTop: 8 }}>
                               <span style={{
-                                background: ps.bg, color: ps.color,
-                                border: `1px solid ${ps.border || ps.color + '40'}`,
+                                background: st.bg, color: st.color,
+                                border: `1px solid ${st.border || st.color + '40'}`,
                                 padding: '3px 10px', fontSize: '0.62rem',
                                 fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
                               }}>
-                                {ps.label}
+                                {st.label}
                               </span>
-                              {b.amountPaid > 0 && (
-                                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: '0.65rem' }}>
-                                  RS. {b.amountPaid?.toLocaleString()} PAID
-                                </span>
-                              )}
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            {isVerified ? (
-                              <span style={{
-                                display: 'flex', alignItems: 'center', gap: 5,
-                                background: '#141a0e', border: '1px solid var(--green)',
-                                color: 'var(--green)', padding: '6px 12px',
-                                fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.08em',
-                              }}>
-                                <IconCheck size={11} color="var(--green)" /> VERIFIED
-                              </span>
-                            ) : (
-                              <button onClick={() => openVerify(selectedDate, ids[0], b)}
+                            {/* Accept button — only for pending */}
+                            {isPending && (
+                              <button onClick={() => setAcceptModal({ date: selectedDate, ids, booking: b })}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 5,
                                   background: '#0e1a0a', border: '1px solid var(--green)40',
@@ -435,8 +454,38 @@ export default function AdminPanel({ onLogout }) {
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--green)40'; }}
                               >
-                                <IconCheck size={11} color="var(--green)" /> VERIFY
+                                <IconCheck size={11} color="var(--green)" /> ACCEPT
                               </button>
+                            )}
+
+                            {/* Reject button — only for pending */}
+                            {isPending && (
+                              <button onClick={() => setRejectModal({ date: selectedDate, ids, booking: b })}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: 5,
+                                  background: '#140a0a', border: '1px solid var(--red)40',
+                                  color: 'var(--red)', padding: '6px 12px',
+                                  cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                                  fontSize: '0.62rem', letterSpacing: '0.08em', borderRadius: 0,
+                                  transition: 'all 0.15s',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--red)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--red)40'; }}
+                              >
+                                <IconX size={11} color="var(--red)" /> REJECT
+                              </button>
+                            )}
+
+                            {/* Accepted badge */}
+                            {isAccepted && (
+                              <span style={{
+                                display: 'flex', alignItems: 'center', gap: 5,
+                                background: '#141a0e', border: '1px solid var(--green)',
+                                color: 'var(--green)', padding: '6px 12px',
+                                fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.08em',
+                              }}>
+                                <IconCheck size={11} color="var(--green)" /> ACCEPTED
+                              </span>
                             )}
 
                             <span style={{
@@ -449,7 +498,27 @@ export default function AdminPanel({ onLogout }) {
                               RS. {totalPrice.toLocaleString()}
                             </span>
 
-                            <button onClick={() => setConfirmDelete({ date: selectedDate, slotId: ids[0], groupIds: ids })}
+                            {/* Tournament cancel button — only for accepted */}
+                            {isAccepted && (
+                              <button
+                                onClick={() => setTournamentModal({ date: selectedDate, ids, booking: b })}
+                                title="Cancel due to tournament"
+                                style={{
+                                  background: '#1a0e00', border: '1px solid #f0a02040',
+                                  color: '#f0a020', padding: '6px 10px',
+                                  display: 'flex', alignItems: 'center', gap: 5,
+                                  cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                                  fontSize: '0.6rem', letterSpacing: '0.06em',
+                                  borderRadius: 0, transition: 'all 0.15s',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#f0a020'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#f0a02040'; }}
+                              >
+                                <IconTrophy size={12} color="#f0a020" /> TOURNAMENT
+                              </button>
+                            )}
+
+                            <button onClick={() => handleDelete(selectedDate, ids[0])}
                               style={{
                                 background: '#140a0a', border: '1px solid #3a1515',
                                 color: 'var(--red)', width: 34, height: 34,
@@ -623,7 +692,6 @@ export default function AdminPanel({ onLogout }) {
               {ALL_SLOT_IDS.map(id => {
                 const b = slotsForDate[id];
                 const isBooked = !!b;
-                // Slot is "past" only on today — if the slot's start hour has already passed
                 const isPast = selectedDate === getTodayStr() && id < new Date().getHours();
                 return (
                   <div key={id} style={{
@@ -639,17 +707,15 @@ export default function AdminPanel({ onLogout }) {
                     {isBooked ? (
                       <>
                         <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)', fontSize: '0.72rem', marginBottom: 2 }}>{b.name}</div>
-                        <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginBottom: 6 }}>{b.sport}</div>
-                        {b.paymentStatus && (
-                          <div style={{
-                            fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
-                            color: (PAYMENT_LABELS[b.paymentStatus] || PAYMENT_LABELS.pending).color,
-                            letterSpacing: '0.06em', marginBottom: 8,
-                          }}>
-                            {(PAYMENT_LABELS[b.paymentStatus] || PAYMENT_LABELS.pending).label}
-                          </div>
-                        )}
-                        <button onClick={() => setConfirmDelete({ date: selectedDate, slotId: id })}
+                        <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginBottom: 4 }}>{b.sport}</div>
+                        <div style={{
+                          fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
+                          color: (STATUS_LABELS[b.status] || STATUS_LABELS.pending).color,
+                          letterSpacing: '0.06em', marginBottom: 8,
+                        }}>
+                          {(STATUS_LABELS[b.status] || STATUS_LABELS.pending).label}
+                        </div>
+                        <button onClick={() => handleDelete(selectedDate, id)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 5,
                             background: '#140a0a', border: '1px solid #3a1515',
@@ -720,8 +786,9 @@ export default function AdminPanel({ onLogout }) {
                       </span>
                     </div>
                     {groups.map(({ ids, booking: b }) => {
-                      const ps = PAYMENT_LABELS[b.paymentStatus] || PAYMENT_LABELS.pending;
-                      const isVerified = b.paymentStatus === 'verified';
+                      const st = STATUS_LABELS[b.status] || STATUS_LABELS.pending;
+                      const isAccepted = b.status === 'accepted';
+                      const isPending = b.status === 'pending';
                       const slotLines = ids.map(id => slotLabel(Number(id))).join('  /  ');
                       return (
                         <div key={ids.join('-')} style={{
@@ -736,33 +803,46 @@ export default function AdminPanel({ onLogout }) {
                             )}
                             <span style={{ color: 'var(--text)', marginRight: 8 }}>{b.name}</span>
                             <span style={{ color: 'var(--muted)', marginRight: 8 }}>{b.phone}</span>
-                            <span style={{ color: ps.color, fontSize: '0.62rem' }}>{ps.label}</span>
-                            {b.amountPaid > 0 && (
-                              <span style={{ color: 'var(--muted)', fontSize: '0.6rem', marginLeft: 6 }}>RS.{b.amountPaid} PAID</span>
-                            )}
+                            <span style={{ color: st.color, fontSize: '0.62rem' }}>{st.label}</span>
                           </div>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                            {isVerified ? (
-                              <span style={{
-                                display: 'flex', alignItems: 'center', gap: 4,
-                                background: '#141a0e', border: '1px solid var(--green)',
-                                color: 'var(--green)', padding: '3px 10px',
-                                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.06em',
-                              }}>
-                                <IconCheck size={9} color="var(--green)" /> VERIFIED
-                              </span>
-                            ) : (
-                              <button onClick={() => openVerify(date, Number(ids[0]), b)}
+                            {isPending && (
+                              <button onClick={() => setAcceptModal({ date, ids: ids.map(Number), booking: b })}
                                 style={{
                                   background: '#0e1a0a', border: '1px solid var(--green)40',
                                   color: 'var(--green)', padding: '4px 10px',
                                   cursor: 'pointer', fontFamily: 'var(--font-mono)',
                                   fontSize: '0.6rem', letterSpacing: '0.06em', borderRadius: 0,
+                                  display: 'flex', alignItems: 'center', gap: 4,
                                 }}>
-                                VERIFY
+                                <IconCheck size={10} color="var(--green)" /> ACCEPT
                               </button>
                             )}
-                            <button onClick={() => setConfirmDelete({ date, slotId: Number(ids[0]), groupIds: ids.map(Number) })}
+                            {isPending && (
+                              <button onClick={() => setRejectModal({ date, ids: ids.map(Number), booking: b })}
+                                style={{
+                                  background: '#140a0a', border: '1px solid var(--red)40',
+                                  color: 'var(--red)', padding: '4px 10px',
+                                  cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                                  fontSize: '0.6rem', letterSpacing: '0.06em', borderRadius: 0,
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                }}>
+                                <IconX size={10} color="var(--red)" /> REJECT
+                              </button>
+                            )}
+                            {isAccepted && (
+                              <button onClick={() => setTournamentModal({ date, ids: ids.map(Number), booking: b })}
+                                style={{
+                                  background: '#1a0e00', border: '1px solid #f0a02040',
+                                  color: '#f0a020', padding: '4px 10px',
+                                  cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                                  fontSize: '0.6rem', letterSpacing: '0.06em', borderRadius: 0,
+                                  display: 'flex', alignItems: 'center', gap: 5,
+                                }}>
+                                <IconTrophy size={11} color="#f0a020" /> TOURNAMENT
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(date, Number(ids[0]))}
                               style={{
                                 background: 'none', border: '1px solid #3a1515',
                                 color: 'var(--red)', width: 28, height: 28,
@@ -783,9 +863,9 @@ export default function AdminPanel({ onLogout }) {
         )}
       </div>
 
-      {/* ── VERIFY PAYMENT MODAL ── */}
-      {verifyModal && (
-        <div onClick={() => setVerifyModal(null)} style={{
+      {/* ── ACCEPT BOOKING MODAL ── */}
+      {acceptModal && (
+        <div onClick={() => setAcceptModal(null)} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
@@ -795,65 +875,26 @@ export default function AdminPanel({ onLogout }) {
             padding: 28, maxWidth: 420, width: '100%',
           }}>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6 }}>
-              VERIFY PAYMENT
+              ACCEPT BOOKING
             </div>
-            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.2rem', letterSpacing: '0.06em', marginBottom: 4 }}>
-              {verifyModal.groupSlotIds.length > 1
-                ? `${verifyModal.groupSlotIds.length} SLOTS (GROUP BOOKING)`
-                : slotLabel(verifyModal.slotId)}
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.2rem', letterSpacing: '0.06em', marginBottom: 16 }}>
+              CONFIRM &amp; NOTIFY CUSTOMER?
             </h3>
-            {verifyModal.groupSlotIds.length > 1 && (
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginBottom: 20, lineHeight: 1.8 }}>
-                {verifyModal.groupSlotIds.map(id => slotLabel(id)).join(' / ')}
-              </div>
-            )}
-            {verifyModal.groupSlotIds.length === 1 && <div style={{ marginBottom: 20 }} />}
 
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
               color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
-              borderBottom: '1px solid var(--border)', padding: '14px 0', marginBottom: 20,
+              borderBottom: '1px solid var(--border)', padding: '14px 0', marginBottom: 24,
             }}>
-              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>NAME</span>{verifyModal.booking.name}</div>
-              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>PHONE</span>{verifyModal.booking.phone}</div>
-              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SPORT</span>{verifyModal.booking.sport}</div>
-              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>TOTAL PRICE</span>RS. {verifyModal.groupSlotIds.reduce((s, id) => s + (id >= 19 ? 1200 : 1000), 0).toLocaleString()}</div>
-            </div>
-
-            {/* Payment status */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={adminLabelStyle}>PAYMENT STATUS</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {[
-                  { val: 'verified', label: 'VERIFIED - CONFIRMED' },
-                  { val: 'paid_less', label: 'PAID LESS (ADVANCE)' },
-                  { val: 'paid_more', label: 'PAID MORE' },
-                ].map(opt => (
-                  <button key={opt.val} onClick={() => setVerifyStatus(opt.val)} style={{
-                    background: verifyStatus === opt.val ? 'var(--green)' : 'var(--dark)',
-                    color: verifyStatus === opt.val ? '#080808' : 'var(--text-dim)',
-                    border: '1px solid', borderColor: verifyStatus === opt.val ? 'var(--green)' : 'var(--border)',
-                    padding: '9px 14px', cursor: 'pointer', textAlign: 'left',
-                    fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.08em',
-                    borderRadius: 0, transition: 'all 0.15s',
-                  }}>{opt.label}</button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={adminLabelStyle}>AMOUNT RECEIVED (RS.)</label>
-              <input
-                type="number"
-                value={verifyAmount}
-                onChange={e => setVerifyAmount(e.target.value)}
-                placeholder="Enter amount received"
-                style={{ borderRadius: 0 }}
-              />
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>NAME</span>{acceptModal.booking.name}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>PHONE</span>{acceptModal.booking.phone}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SPORT</span>{acceptModal.booking.sport}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(acceptModal.date)}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{acceptModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
             </div>
 
             <div style={{ display: 'flex', gap: 2 }}>
-              <button onClick={handleVerify} style={{
+              <button onClick={handleAccept} style={{
                 flex: 1, background: 'var(--green)', color: '#080808', border: 'none',
                 padding: '12px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
                 letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 0,
@@ -864,68 +905,132 @@ export default function AdminPanel({ onLogout }) {
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--green)'}
               >
                 <IconWhatsApp size={14} color="#080808" />
-                CONFIRM &amp; SEND WHATSAPP
+                ACCEPT &amp; SEND WHATSAPP
               </button>
-              <button onClick={() => setVerifyModal(null)} style={{
+              <button onClick={() => setAcceptModal(null)} style={{
                 padding: '12px 16px', background: 'var(--dark)', color: 'var(--text-dim)',
                 border: '1px solid var(--border)', fontFamily: 'var(--font-mono)',
                 fontSize: '0.72rem', cursor: 'pointer', borderRadius: 0, letterSpacing: '0.08em',
               }}>CANCEL</button>
             </div>
             <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginTop: 10, textAlign: 'center', letterSpacing: '0.04em' }}>
-              Opens WhatsApp with a pre-filled confirmation message.
+              Opens WhatsApp with a confirmation message to the customer.
             </p>
           </div>
         </div>
       )}
 
-      {/* ── CONFIRM DELETE MODAL ── */}
-      {confirmDelete && (
-        <div onClick={() => setConfirmDelete(null)} style={{
+      {/* ── REJECT BOOKING MODAL ── */}
+      {rejectModal && (
+        <div onClick={() => setRejectModal(null)} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             background: 'var(--card-bg)', border: '1px solid var(--red)',
-            padding: 32, maxWidth: 360, width: '100%',
+            padding: 28, maxWidth: 420, width: '100%',
           }}>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--red)', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 8 }}>
-                CONFIRM REMOVAL
-              </div>
-              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.6rem', letterSpacing: '0.06em' }}>
-                DELETE BOOKING?
-              </h3>
+            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--red)', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6 }}>
+              REJECT BOOKING
             </div>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.2rem', letterSpacing: '0.06em', marginBottom: 8 }}>
+              REJECT &amp; NOTIFY CUSTOMER?
+            </h3>
+            <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.66rem', lineHeight: 1.7, marginBottom: 20 }}>
+              This will remove the booking and send a polite WhatsApp message to the customer informing them of the rejection.
+            </p>
 
             <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.78rem', lineHeight: 1.9, color: 'var(--text-dim)',
-              borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
-              padding: '16px 0', marginBottom: 24,
+              fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
+              color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border)', padding: '14px 0', marginBottom: 24,
             }}>
-              <div>{slotLabel(confirmDelete.slotId)}</div>
-              <div>{parseDateLabel(confirmDelete.date)}</div>
-              <div style={{ color: 'var(--text)' }}>
-                {(bookings[confirmDelete.date] || slotsForDate)?.[confirmDelete.slotId]?.name}
-              </div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>NAME</span>{rejectModal.booking.name}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>PHONE</span>{rejectModal.booking.phone}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SPORT</span>{rejectModal.booking.sport}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(rejectModal.date)}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{rejectModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
             </div>
 
             <div style={{ display: 'flex', gap: 2 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{
-                flex: 1, background: 'transparent', border: '1px solid var(--border)',
-                color: 'var(--text-dim)', padding: '11px', cursor: 'pointer',
-                fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', borderRadius: 0,
-              }}>CANCEL</button>
-              <button onClick={() => handleDelete(confirmDelete.date, confirmDelete.slotId)}
-                style={{
-                  flex: 1, background: 'var(--red)', border: 'none', color: '#fff', padding: '11px',
-                  cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
-                  letterSpacing: '0.1em', borderRadius: 0, transition: 'background 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#ff5555'}
+              <button onClick={handleReject} style={{
+                flex: 1, background: 'var(--red)', color: '#fff', border: 'none',
+                padding: '12px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+                letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                transition: 'background 0.2s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = '#e03030'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--red)'}
-              >DELETE</button>
+              >
+                <IconWhatsApp size={14} color="#fff" />
+                REJECT &amp; SEND WHATSAPP
+              </button>
+              <button onClick={() => setRejectModal(null)} style={{
+                padding: '12px 16px', background: 'var(--dark)', color: 'var(--text-dim)',
+                border: '1px solid var(--border)', fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem', cursor: 'pointer', borderRadius: 0, letterSpacing: '0.08em',
+              }}>BACK</button>
+            </div>
+            <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.62rem', marginTop: 10, textAlign: 'center', letterSpacing: '0.04em' }}>
+              Opens WhatsApp with a polite rejection message to the customer.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── TOURNAMENT CANCEL MODAL ── */}
+      {tournamentModal && (
+        <div onClick={() => setTournamentModal(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200, padding: 24, animation: 'fadeIn 0.15s ease',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--card-bg)', border: '1px solid #f0a020',
+            padding: 28, maxWidth: 420, width: '100%',
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', color: '#f0a020', fontSize: '0.65rem', letterSpacing: '0.2em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <IconTrophy size={14} color="#f0a020" /> TOURNAMENT CANCELLATION
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text)', fontSize: '1.1rem', letterSpacing: '0.06em', marginBottom: 8 }}>
+              CANCEL DUE TO TOURNAMENT?
+            </h3>
+            <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.66rem', lineHeight: 1.7, marginBottom: 20 }}>
+              This will delete the booking and send a WhatsApp message to the customer informing them of the cancellation due to a tournament.
+            </p>
+
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.9,
+              color: 'var(--text-dim)', borderTop: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border)', padding: '14px 0', marginBottom: 24,
+            }}>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>NAME</span>{tournamentModal.booking.name}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>PHONE</span>{tournamentModal.booking.phone}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>DATE</span>{parseDateLabel(tournamentModal.date)}</div>
+              <div><span style={{ color: 'var(--muted)', marginRight: 10 }}>SLOTS</span>{tournamentModal.ids.map(id => slotLabel(id)).join(' / ')}</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 2 }}>
+              <button onClick={handleTournamentCancel} style={{
+                flex: 1, background: '#f0a020', color: '#000', border: 'none',
+                padding: '12px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+                letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                transition: 'background 0.2s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = '#ffbb44'}
+                onMouseLeave={e => e.currentTarget.style.background = '#f0a020'}
+              >
+                <IconWhatsApp size={14} color="#000" />
+                CANCEL &amp; NOTIFY VIA WHATSAPP
+              </button>
+              <button onClick={() => setTournamentModal(null)} style={{
+                padding: '12px 16px', background: 'var(--dark)', color: 'var(--text-dim)',
+                border: '1px solid var(--border)', fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem', cursor: 'pointer', borderRadius: 0, letterSpacing: '0.08em',
+              }}>BACK</button>
             </div>
           </div>
         </div>
@@ -934,6 +1039,10 @@ export default function AdminPanel({ onLogout }) {
       <style>{`
         @media (max-width: 480px) {
           .add-form-fields { grid-template-columns: 1fr !important; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>

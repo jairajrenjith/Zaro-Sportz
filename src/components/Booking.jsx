@@ -6,9 +6,7 @@ import {
 } from '../utils/bookingStore';
 import { IconCalendar, IconClock, IconChevronDown, IconCheck, IconWhatsApp } from './Icons';
 
-const UPI_ID = 'zarosarojini101@okhdfcbank';
 const ADMIN_PHONE = '917012890090';
-const ADVANCE_PER_SLOT = 200;
 
 function generateSlots() {
   const slots = [];
@@ -38,25 +36,6 @@ function isPastSlot(slotId, dateStr) {
 
 const SPORTS = ["6's Football", 'Cricket'];
 
-import upiQr from '../assets/upi_qr.png';
-
-function UpiQR() {
-  return (
-    <img
-      src={upiQr}
-      alt="UPI QR Code"
-      style={{
-        width: 170, height: 170,
-        border: '4px solid #fff',
-        background: '#fff',
-        padding: 4,
-        display: 'block',
-        borderRadius: 8,
-      }}
-    />
-  );
-}
-
 export default function Booking() {
   const dates = getAvailableDates();
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
@@ -68,8 +47,8 @@ export default function Booking() {
   const [phone, setPhone] = useState('');
   const [dropOpen, setDropOpen] = useState(false);
 
-  const [step, setStep] = useState('form'); // 'form' | 'payment' | 'done'
-  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [step, setStep] = useState('form'); // 'form' | 'done'
+  const [submitting, setSubmitting] = useState(false);
 
   const sectionRef = useRef();
 
@@ -84,7 +63,7 @@ export default function Booking() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (step === 'payment' || step === 'done') {
+    if (step === 'done') {
       setTimeout(() => {
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 80);
@@ -101,7 +80,10 @@ export default function Booking() {
   }, [dropOpen]);
 
   const toggleSlot = (id) => {
-    if (bookedMap[id] || isPastSlot(id, selectedDate)) return;
+    // Only block if slot is accepted (truly booked) or past
+    const slotData = bookedMap[id];
+    const isAccepted = slotData?.status === 'accepted';
+    if (isAccepted || isPastSlot(id, selectedDate)) return;
     setSelected(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
@@ -112,9 +94,6 @@ export default function Booking() {
     return sum + (slot?.price || 0);
   }, 0);
 
-  const advance = selected.length * ADVANCE_PER_SLOT;
-  const balance = total - advance;
-
   const selectedLabel = dates.find(d => d.value === selectedDate)?.label || selectedDate;
 
   const slotLabels = selected
@@ -122,20 +101,15 @@ export default function Booking() {
     .map(id => ALL_SLOTS.find(s => s.id === id)?.label)
     .join(', ');
 
-  const handleProceedToPayment = () => {
+  const handleSubmit = async () => {
     if (!name || !phone || selected.length === 0) return;
-    setStep('payment');
-  };
-
-  const handlePaid = async () => {
-    setPaySubmitting(true);
+    setSubmitting(true);
 
     await bookSlots({
       date: selectedDate,
       slotIds: selected,
       name, phone, sport,
-      paymentStatus: 'advance_paid',
-      amountPaid: advance,
+      status: 'pending',
     });
 
     const statusLine = selected.length > 1
@@ -143,20 +117,18 @@ export default function Booking() {
       : `Slot: ${slotLabels}`;
 
     const msg =
-      `NEW BOOKING - ZARO SPORTZ\n\n` +
+      `NEW BOOKING REQUEST - ZARO SPORTZ\n\n` +
       `Name: ${name}\n` +
       `Phone: ${phone}\n` +
       `Sport: ${sport}\n` +
       `Date: ${selectedLabel}\n` +
       `${statusLine}\n` +
-      `Total: Rs.${total}\n` +
-      `Advance Paid: Rs.${advance}\n` +
-      `Balance Due at Venue: Rs.${balance}\n\n` +
-      `Please confirm the booking.`;
+      `Total: Rs.${total}\n\n` +
+      `Please confirm this booking.`;
 
     window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
 
-    setPaySubmitting(false);
+    setSubmitting(false);
     setStep('done');
   };
 
@@ -175,7 +147,7 @@ export default function Booking() {
     }}>
       <div className="section-label">RESERVE YOUR TIME</div>
       <h2 className="section-title">Book a <span>Slot</span></h2>
-      <p className="section-sub">Select date and time — pay advance via UPI to confirm</p>
+      <p className="section-sub">Select your date and time — admin will confirm via WhatsApp</p>
 
       <div className="reveal visible" style={{
         maxWidth: 740, margin: '0 auto',
@@ -190,7 +162,6 @@ export default function Booking() {
             textAlign: 'center',
             borderRadius: 12,
           }}>
-            {/* Green circle with BLACK tick */}
             <div style={{
               width: 64, height: 64,
               background: 'var(--green)',
@@ -202,11 +173,11 @@ export default function Booking() {
               <IconCheck size={30} color="#000000" />
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(1.5rem, 5vw, 2rem)', color: 'var(--text)', letterSpacing: '0.06em', marginBottom: 8 }}>
-              BOOKING SUBMITTED
+              REQUEST SENT
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: '0.8rem', lineHeight: 1.8, marginBottom: 28 }}>
-              Your slot is reserved. The admin will verify your payment
-              and send a WhatsApp confirmation shortly.
+              Your booking request has been submitted and the admin has been notified on WhatsApp.
+              You will receive a WhatsApp confirmation once the admin accepts your slot.
             </div>
             <button onClick={handleReset} style={{
               background: 'transparent',
@@ -220,119 +191,6 @@ export default function Booking() {
               cursor: 'pointer',
               borderRadius: 8,
             }}>BOOK ANOTHER SLOT</button>
-          </div>
-        )}
-
-        {/* PAYMENT STEP */}
-        {step === 'payment' && (
-          <div style={{
-            background: 'var(--card-bg)',
-            border: '1px solid var(--border)',
-            padding: 'clamp(20px, 5vw, 36px)',
-            borderRadius: 12,
-          }}>
-            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.62rem', letterSpacing: '0.16em', marginBottom: 24 }}>
-              STEP 2 OF 2 — ADVANCE PAYMENT
-            </div>
-
-            {/* Summary */}
-            <div style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--border)',
-              padding: '16px 18px',
-              marginBottom: 24,
-              borderRadius: 8,
-            }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-dim)', lineHeight: 2 }}>
-                <div><span style={{ color: 'var(--muted)' }}>NAME:</span> {name}</div>
-                <div><span style={{ color: 'var(--muted)' }}>SPORT:</span> {sport}</div>
-                <div><span style={{ color: 'var(--muted)' }}>DATE:</span> {selectedLabel}</div>
-                <div><span style={{ color: 'var(--muted)' }}>SLOTS:</span> {slotLabels}</div>
-              </div>
-              <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: 6 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.12em', marginBottom: 4 }}>TOTAL</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{total.toLocaleString()}</div>
-                </div>
-                {/* Green "PAY NOW" card — text in black for readability */}
-                <div style={{ background: 'var(--green)', border: '1px solid var(--green)', padding: '10px 12px', borderRadius: 6 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#000000', letterSpacing: '0.12em', marginBottom: 4, fontWeight: 700 }}>PAY NOW</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#000000', letterSpacing: '0.04em' }}>RS.{advance.toLocaleString()}</div>
-                </div>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: 6 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.12em', marginBottom: 4 }}>AT VENUE</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>RS.{balance.toLocaleString()}</div>
-                </div>
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--muted)', marginTop: 10, letterSpacing: '0.04em' }}>
-                Pay Rs.{ADVANCE_PER_SLOT} advance per slot online. Pay the balance at the venue.
-              </div>
-            </div>
-
-            {/* UPI QR + ID */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 14,
-              marginBottom: 24,
-              padding: '20px 16px',
-              border: '1px solid var(--border)',
-              background: 'var(--bg)',
-              borderRadius: 8,
-            }}>
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', letterSpacing: '0.16em' }}>
-                SCAN TO PAY RS.{advance} ADVANCE
-              </div>
-              <UpiQR />
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontSize: '0.6rem', letterSpacing: '0.16em', marginBottom: 6 }}>
-                  OR PAY TO UPI ID
-                </div>
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--green)',
-                  fontSize: 'clamp(0.72rem, 2.5vw, 0.9rem)',
-                  letterSpacing: '0.04em',
-                  wordBreak: 'break-all',
-                  textAlign: 'center',
-                  padding: '0 8px',
-                }}>{UPI_ID}</div>
-              </div>
-            </div>
-
-            <button
-              onClick={handlePaid}
-              disabled={paySubmitting}
-              style={{
-                width: '100%',
-                background: paySubmitting ? 'var(--card-bg)' : 'var(--green)',
-                color: paySubmitting ? 'var(--muted)' : '#000000',
-                border: 'none',
-                padding: '15px',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
-                letterSpacing: '0.1em',
-                cursor: paySubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                borderRadius: 8,
-              }}
-              onMouseEnter={e => { if (!paySubmitting) e.currentTarget.style.background = '#d8ff50'; }}
-              onMouseLeave={e => { if (!paySubmitting) e.currentTarget.style.background = 'var(--green)'; }}
-            >
-              <IconWhatsApp size={18} color={paySubmitting ? 'var(--muted)' : '#000000'} />
-              {paySubmitting ? 'SAVING...' : 'I HAVE PAID — NOTIFY ADMIN'}
-            </button>
-
-            <p style={{
-              textAlign: 'center', color: 'var(--muted)',
-              fontSize: '0.7rem', marginTop: 12,
-              fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
-            }}>
-              This will save your booking and open WhatsApp to notify the admin.
-            </p>
           </div>
         )}
 
@@ -371,9 +229,6 @@ export default function Booking() {
               padding: 'clamp(16px, 5vw, 36px)',
               borderRadius: 12,
             }}>
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)', fontSize: '0.62rem', letterSpacing: '0.16em', marginBottom: 24 }}>
-                STEP 1 OF 2 — DETAILS &amp; SLOTS
-              </div>
 
               {/* Date dropdown */}
               <div style={{ marginBottom: 24, position: 'relative' }} className="date-dropdown">
@@ -448,12 +303,15 @@ export default function Booking() {
                 </label>
                 <div className="slot-grid">
                   {ALL_SLOTS.map(slot => {
-                    const isBooked = !!bookedMap[slot.id];
+                    const slotData = bookedMap[slot.id];
+                    // Only truly booked (accepted) slots are shown as unavailable to users
+                    const isBooked = slotData?.status === 'accepted';
                     const isPast = isPastSlot(slot.id, selectedDate);
+                    const isUnavailable = isBooked;
                     const isActive = selected.includes(slot.id);
                     return (
                       <button key={slot.id} onClick={() => toggleSlot(slot.id)}
-                        disabled={isBooked || isPast || loading}
+                        disabled={isUnavailable || isPast || loading}
                         style={{
                           background: isBooked
                             ? 'var(--bg)'
@@ -462,7 +320,6 @@ export default function Booking() {
                               : isActive
                                 ? 'var(--green)'
                                 : 'var(--dark)',
-                          // When active (green bg), use black text for readability
                           color: isBooked
                             ? '#c02020'
                             : isPast
@@ -479,7 +336,7 @@ export default function Booking() {
                                 ? 'var(--green)'
                                 : slot.peak ? '#f0c42022' : 'var(--border)',
                           padding: '9px 4px',
-                          cursor: isBooked || isPast || loading ? 'not-allowed' : 'pointer',
+                          cursor: isUnavailable || isPast || loading ? 'not-allowed' : 'pointer',
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.68rem',
                           transition: 'all 0.12s',
@@ -505,7 +362,7 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Summary bar — green bg, all text black */}
+              {/* Summary bar */}
               {selected.length > 0 && (
                 <div style={{
                   background: 'var(--green)',
@@ -521,11 +378,11 @@ export default function Booking() {
                       {selected.length} SLOT{selected.length > 1 ? 'S' : ''} — TOTAL RS.{total.toLocaleString()}
                     </span>
                     <div style={{ fontFamily: 'var(--font-mono)', color: '#1a1a00', fontSize: '0.65rem', marginTop: 3 }}>
-                      Advance to pay: RS.{advance} &nbsp;|&nbsp; Balance at venue: RS.{balance}
+                      Payment to be settled at the venue
                     </div>
                   </div>
                   <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#000000', fontSize: '1.5rem', letterSpacing: '0.04em' }}>
-                    RS. {advance}
+                    RS. {total.toLocaleString()}
                   </span>
                 </div>
               )}
@@ -552,7 +409,7 @@ export default function Booking() {
               </div>
 
               {/* Sport type selector */}
-              <div style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 20 }}>
                 <label style={labelStyle}>SPORT TYPE</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {SPORTS.map(s => (
@@ -565,7 +422,6 @@ export default function Booking() {
                       fontSize: 'clamp(0.75rem, 2.5vw, 0.95rem)',
                       letterSpacing: '0.04em',
                       transition: 'all 0.18s',
-                      // Active: green bg with black text; inactive: dark bg with dimmed text
                       background: sport === s ? 'var(--green)' : 'var(--dark)',
                       color: sport === s ? '#000000' : 'var(--text-dim)',
                       border: '1px solid',
@@ -576,31 +432,56 @@ export default function Booking() {
                 </div>
               </div>
 
-              <button onClick={handleProceedToPayment}
-                disabled={!name || !phone || selected.length === 0}
+              {/* Tournament disclaimer */}
+              <div style={{
+                background: '#0f0e00',
+                border: '1px solid #f0c42030',
+                borderRadius: 8,
+                padding: '12px 16px',
+                marginBottom: 20,
+                display: 'flex',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}>
+                <span style={{ fontSize: '0.85rem', flexShrink: 0, marginTop: 1 }}>⚠</span>
+                <p style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.66rem',
+                  color: 'var(--text-dim)',
+                  lineHeight: 1.7,
+                  letterSpacing: '0.03em',
+                  margin: 0,
+                }}>
+                  <span style={{ color: 'var(--yellow)', fontWeight: 700 }}>NOTE:</span> In the event of a tournament or special event organized by Zaro Sportz, the management reserves the right to cancel a confirmed booking. You will be notified in advance via WhatsApp if this occurs.
+                </p>
+              </div>
+
+              <button onClick={handleSubmit}
+                disabled={!name || !phone || selected.length === 0 || submitting}
                 style={{
                   width: '100%',
-                  background: !name || !phone || selected.length === 0 ? 'var(--card-bg)' : 'var(--green)',
-                  color: !name || !phone || selected.length === 0 ? 'var(--muted)' : '#000000',
+                  background: !name || !phone || selected.length === 0 || submitting ? 'var(--card-bg)' : 'var(--green)',
+                  color: !name || !phone || selected.length === 0 || submitting ? 'var(--muted)' : '#000000',
                   border: 'none',
                   padding: '15px',
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
                   fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
                   letterSpacing: '0.1em',
-                  cursor: !name || !phone || selected.length === 0 ? 'not-allowed' : 'pointer',
+                  cursor: !name || !phone || selected.length === 0 || submitting ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                   borderRadius: 8,
                 }}
                 onMouseEnter={e => {
-                  if (name && phone && selected.length > 0) e.currentTarget.style.background = '#d8ff50';
+                  if (name && phone && selected.length > 0 && !submitting) e.currentTarget.style.background = '#d8ff50';
                 }}
                 onMouseLeave={e => {
-                  if (name && phone && selected.length > 0) e.currentTarget.style.background = 'var(--green)';
+                  if (name && phone && selected.length > 0 && !submitting) e.currentTarget.style.background = 'var(--green)';
                 }}
               >
-                PROCEED TO PAYMENT
+                <IconWhatsApp size={18} color={!name || !phone || selected.length === 0 || submitting ? 'var(--muted)' : '#000000'} />
+                {submitting ? 'SUBMITTING...' : 'REQUEST BOOKING'}
               </button>
 
               <p style={{
@@ -608,7 +489,7 @@ export default function Booking() {
                 fontSize: '0.7rem', marginTop: 12,
                 fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
               }}>
-                You will be shown UPI payment details in the next step. Only advance of RS.{ADVANCE_PER_SLOT} per slot is collected online.
+                Your request will be sent to the admin. A WhatsApp confirmation will follow once accepted.
               </p>
             </div>
           </>

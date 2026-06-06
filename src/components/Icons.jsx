@@ -216,3 +216,15 @@ export function ZaroWordmark({ height = 28, color = '#c8f135' }) {
     </svg>
   );
 }
+
+export function IconTrophy({ size = 20, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/>
+      <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"/>
+      <path d="M6 3h12v8a6 6 0 0 1-12 0Z"/>
+      <path d="M12 17v4"/>
+      <path d="M8 21h8"/>
+    </svg>
+  );
+}
