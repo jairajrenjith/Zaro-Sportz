@@ -17,15 +17,15 @@ export default function Contact() {
     {
       Icon: IconPhone,
       label: 'Call Us',
-      value: '+91 70128 90090',
-      href: 'tel:+917012890090',
+      value: '+91 98472 24717',
+      href: 'tel:+919847224717',
       accentColor: 'var(--green)',
     },
     {
       Icon: IconWhatsApp,
       label: 'WhatsApp',
       value: 'Chat on WhatsApp',
-      href: 'https://wa.me/917012890090',
+      href: 'https://wa.me/919847224717',
       accentColor: '#25D366',
     },
     {

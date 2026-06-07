@@ -66,8 +66,8 @@ export default function Footer() {
             marginBottom: 4,
           }}>CONTACT</div>
           {[
-            { Icon: IconPhone, text: '+91 70128 90090', href: 'tel:+917012890090' },
-            { Icon: IconWhatsApp, text: 'WhatsApp Us', href: 'https://wa.me/917012890090' },
+            { Icon: IconPhone, text: '+91 98472 24717', href: 'tel:+919847224717' },
+            { Icon: IconWhatsApp, text: 'WhatsApp Us', href: 'https://wa.me/919847224717' },
             { Icon: IconInstagram, text: '@zarofootball', href: 'https://www.instagram.com/zarofootball' },
           ].map(c => (
             <a key={c.href} href={c.href} target="_blank" rel="noopener noreferrer"

@@ -10,7 +10,7 @@ import {
 } from './Icons';
 import logo from '../assets/zaro_logo.jpg';
 
-const ADMIN_PHONE = '917012890090';
+const ADMIN_PHONE = '919847224717';
 const ALL_SLOT_IDS = Array.from({ length: 18 }, (_, i) => i + 6);
 
 function slotLabel(h) {

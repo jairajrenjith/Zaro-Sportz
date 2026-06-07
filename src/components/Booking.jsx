@@ -5,7 +5,7 @@ import {
 } from '../utils/bookingStore';
 import { IconCalendar, IconClock, IconChevronDown, IconCheck, IconWhatsApp } from './Icons';
 
-const ADMIN_PHONE = '917012890090';
+const ADMIN_PHONE = '919847224717';
 
 function generateSlots() {
   const slots = [];
