@@ -30,7 +30,7 @@ function isPastSlot(slotId, dateStr) {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   if (dateStr !== todayStr) return false;
-  return slotId < today.getHours();
+  return slotId <= today.getHours();
 }
 
 const SPORTS = ["6's Football", 'Cricket'];
